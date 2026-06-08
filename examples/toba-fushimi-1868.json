@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "title": "鳥羽伏見之戰",
+    "subtitle": "1868 戊辰戰爭 — 橋本・八幡兩地之戰",
+    "aspectRatio": "16:9",
+    "basemapStyle": "positron",
+    "titlePosition": "top-center",
+    "attribution": "© OpenStreetMap, OpenFreeMap"
+  },
+  "factions": [
+    { "id": "shogun", "name": "舊幕府軍", "color": "#5b86d6" },
+    { "id": "gov", "name": "新政府軍", "color": "#d6534d" },
+    { "id": "tsu", "name": "津藩（倒戈砲擊）", "color": "#e08a3c" }
+  ],
+  "places": [
+    { "id": "kyoto", "name": "京都", "lng": 135.768, "lat": 35.0117, "kind": "city", "faction": "gov", "note": "新政府軍所在,舊幕府軍進攻目標。" },
+    { "id": "toba", "name": "鳥羽", "lng": 135.747, "lat": 34.946, "kind": "battle", "note": "鳥羽口戰場,開戰地之一。" },
+    { "id": "fushimi", "name": "伏見", "lng": 135.761, "lat": 34.932, "kind": "battle", "note": "伏見口戰場,與鳥羽同為開戰地。" },
+    { "id": "yodo", "name": "淀城", "lng": 135.7237, "lat": 34.9089, "kind": "castle", "faction": "shogun", "note": "舊幕府軍敗退至此欲據守,淀藩閉門不納。" },
+    { "id": "hashimoto", "name": "橋本", "lng": 135.6886, "lat": 34.8917, "kind": "battle", "faction": "shogun", "appearAtPhase": "p2", "note": "舊幕府軍最後防線之一,扼淀川右岸。" },
+    { "id": "otokoyama", "name": "八幡・男山", "lng": 135.6996, "lat": 34.8785, "kind": "terrain", "appearAtPhase": "p2", "note": "西山山系南端,石清水八幡宮所在,與天王山夾淀川。" },
+    { "id": "tennozan", "name": "天王山", "lng": 135.6775, "lat": 34.898, "kind": "terrain", "appearAtPhase": "p2", "note": "與男山夾淀川形成隘口,扼京阪間咽喉。" },
+    { "id": "yamazaki", "name": "山崎", "lng": 135.6856, "lat": 34.9036, "kind": "battle", "faction": "tsu", "appearAtPhase": "p3", "note": "津藩砲兵陣地,於此倒戈,越川砲擊橋本守軍。" },
+    { "id": "osaka", "name": "大坂城", "lng": 135.5259, "lat": 34.6873, "kind": "castle", "faction": "shogun", "note": "舊幕府軍根據地,防線崩潰後全軍退卻於此。" }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "舊幕府軍北上",
+      "date": "1868-01-27",
+      "durationSec": 7,
+      "transitionSec": 2.5,
+      "camera": { "center": [135.66, 34.85], "zoom": 10.4, "bearing": 0, "pitch": 32 },
+      "movements": [
+        {
+          "id": "m1", "label": "① 北上", "factionId": "shogun", "style": "advance",
+          "path": [[135.5259, 34.6873], [135.62, 34.84], [135.7237, 34.9089], [135.761, 34.932]],
+          "drawDurationSec": 5
+        }
+      ],
+      "annotations": [{ "text": "舊幕府軍自大坂北上,進逼京都", "lng": 135.6, "lat": 34.79 }]
+    },
+    {
+      "id": "p2",
+      "title": "戰敗南退",
+      "date": "1868-01-30",
+      "durationSec": 7,
+      "transitionSec": 2.5,
+      "camera": { "center": [135.715, 34.91], "zoom": 11.6, "bearing": -10, "pitch": 38 },
+      "movements": [
+        {
+          "id": "m2", "label": "② 南退守橋本", "factionId": "shogun", "style": "retreat",
+          "path": [[135.761, 34.932], [135.7237, 34.9089], [135.6886, 34.8917]],
+          "drawDurationSec": 4.5
+        }
+      ],
+      "annotations": [{ "text": "鳥羽伏見失利,南退守橋本", "lng": 135.74, "lat": 34.965 }]
+    },
+    {
+      "id": "p3",
+      "title": "津藩倒戈砲擊",
+      "date": "1868-01-31",
+      "durationSec": 7,
+      "transitionSec": 2.5,
+      "camera": { "center": [135.689, 34.895], "zoom": 13, "bearing": -18, "pitch": 48 },
+      "movements": [
+        {
+          "id": "m3", "label": "③ 越川砲擊", "factionId": "tsu", "style": "artillery",
+          "path": [[135.6856, 34.9036], [135.6886, 34.8917]],
+          "drawDurationSec": 3.5
+        }
+      ],
+      "annotations": [{ "text": "津藩倒戈,幕軍遭夾擊", "lng": 135.6856, "lat": 34.9036 }]
+    },
+    {
+      "id": "p4",
+      "title": "全軍退往大坂",
+      "date": "1868-02-01",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [135.61, 34.8], "zoom": 9.8, "bearing": 0, "pitch": 24 },
+      "movements": [
+        {
+          "id": "m4", "label": "④ 退往大坂", "factionId": "shogun", "style": "retreat",
+          "path": [[135.6886, 34.8917], [135.62, 34.84], [135.5259, 34.6873]],
+          "drawDurationSec": 5.5
+        }
+      ],
+      "annotations": [{ "text": "防線崩潰,全軍退往大坂", "lng": 135.585, "lat": 34.78 }]
+    }
+  ]
+}

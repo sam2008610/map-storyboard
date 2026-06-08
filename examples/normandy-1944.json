@@ -1,0 +1,90 @@
+{
+  "meta": {
+    "title": "諾曼第登陸",
+    "subtitle": "1944・大君主作戰 D-Day",
+    "aspectRatio": "16:9",
+    "basemapStyle": "positron",
+    "titlePosition": "top-center",
+    "attribution": "© OpenStreetMap, OpenFreeMap"
+  },
+  "factions": [
+    { "id": "allies", "name": "盟軍（兩棲登陸）", "color": "#5b86d6" },
+    { "id": "airborne", "name": "盟軍空降部隊", "color": "#5cb89a" },
+    { "id": "germany", "name": "德軍", "color": "#d6534d" }
+  ],
+  "places": [
+    { "id": "utah", "name": "猶他灘", "lng": -1.175, "lat": 49.415, "kind": "battle", "faction": "allies", "note": "美軍最西側登陸灘頭。" },
+    { "id": "omaha", "name": "奧馬哈灘", "lng": -0.8633, "lat": 49.37, "kind": "battle", "faction": "allies", "note": "美軍登陸,傷亡最慘重的灘頭。" },
+    { "id": "gold", "name": "黃金灘", "lng": -0.55, "lat": 49.34, "kind": "battle", "faction": "allies", "note": "英軍登陸灘頭。" },
+    { "id": "juno", "name": "朱諾灘", "lng": -0.4667, "lat": 49.335, "kind": "battle", "faction": "allies", "note": "加拿大軍登陸灘頭。" },
+    { "id": "sword", "name": "寶劍灘", "lng": -0.3, "lat": 49.29, "kind": "battle", "faction": "allies", "note": "英軍最東側登陸灘頭。" },
+    { "id": "pointeduhoc", "name": "霍克角", "lng": -0.9893, "lat": 49.3958, "kind": "battle", "faction": "allies", "appearAtPhase": "p2", "note": "美軍遊騎兵攀崖突擊的德軍砲台。" },
+    { "id": "saintemere", "name": "聖梅爾埃格利斯", "lng": -1.3167, "lat": 49.4083, "kind": "city", "faction": "airborne", "appearAtPhase": "p1", "note": "美軍 82 空降師奪取的內陸要鎮。" },
+    { "id": "pegasus", "name": "佩加索斯橋", "lng": -0.274, "lat": 49.242, "kind": "battle", "faction": "airborne", "appearAtPhase": "p1", "note": "英軍滑翔機部隊午夜奪橋。" },
+    { "id": "carentan", "name": "卡朗坦", "lng": -1.2456, "lat": 49.3036, "kind": "city", "faction": "germany", "appearAtPhase": "p3", "note": "連結猶他與奧馬哈灘頭的樞紐。" },
+    { "id": "bayeux", "name": "巴約", "lng": -0.7, "lat": 49.2764, "kind": "city", "faction": "germany", "note": "登陸後最早解放的內陸城鎮。" },
+    { "id": "caen", "name": "卡昂", "lng": -0.37, "lat": 49.1829, "kind": "city", "faction": "germany", "note": "D-Day 當日預定卻未能拿下的目標。" }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "午夜空降序幕",
+      "date": "1944-06-06",
+      "durationSec": 7,
+      "transitionSec": 2.5,
+      "camera": { "center": [-0.82, 49.36], "zoom": 9.4, "bearing": 0, "pitch": 35 },
+      "movements": [
+        {
+          "id": "ab-us", "label": "美軍空降（聖梅爾）", "factionId": "airborne", "style": "advance",
+          "path": [[-1.28, 49.5], [-1.3167, 49.4083]], "drawDurationSec": 4
+        },
+        {
+          "id": "ab-uk", "label": "英軍空降（奪橋）", "factionId": "airborne", "style": "advance",
+          "path": [[-0.18, 49.33], [-0.274, 49.242]], "drawDurationSec": 4
+        }
+      ],
+      "annotations": [{ "text": "D-Day 前夜：空降部隊著陸內陸", "lng": -0.82, "lat": 49.52 }]
+    },
+    {
+      "id": "p2",
+      "title": "五處灘頭登陸",
+      "date": "1944-06-06",
+      "durationSec": 9,
+      "transitionSec": 2.5,
+      "camera": { "center": [-0.72, 49.34], "zoom": 9.5, "bearing": 0, "pitch": 30 },
+      "movements": [
+        { "id": "l-utah", "label": "猶他灘", "factionId": "allies", "style": "advance", "path": [[-1.175, 49.55], [-1.175, 49.415]], "drawDurationSec": 4.5 },
+        { "id": "l-omaha", "label": "奧馬哈灘", "factionId": "allies", "style": "advance", "path": [[-0.8633, 49.5], [-0.8633, 49.37]], "drawDurationSec": 4.5 },
+        { "id": "l-gold", "label": "黃金灘", "factionId": "allies", "style": "advance", "path": [[-0.55, 49.48], [-0.55, 49.34]], "drawDurationSec": 4.5 },
+        { "id": "l-juno", "label": "朱諾灘", "factionId": "allies", "style": "advance", "path": [[-0.4667, 49.47], [-0.4667, 49.335]], "drawDurationSec": 4.5 },
+        { "id": "l-sword", "label": "寶劍灘", "factionId": "allies", "style": "advance", "path": [[-0.3, 49.43], [-0.3, 49.29]], "drawDurationSec": 4.5 }
+      ],
+      "annotations": [{ "text": "1944.06.06 清晨 H 時：五灘同時搶灘", "lng": -0.7, "lat": 49.55 }]
+    },
+    {
+      "id": "p3",
+      "title": "鞏固灘頭・向內陸推進",
+      "date": "1944-06-09",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [-0.78, 49.3], "zoom": 9.6, "bearing": 0, "pitch": 32 },
+      "movements": [
+        { "id": "i-carentan", "label": "南下卡朗坦", "factionId": "allies", "style": "advance", "path": [[-1.175, 49.415], [-1.2456, 49.3036]], "drawDurationSec": 4 },
+        { "id": "i-bayeux", "label": "進取巴約", "factionId": "allies", "style": "advance", "path": [[-0.6, 49.34], [-0.7, 49.2764]], "drawDurationSec": 4 }
+      ],
+      "annotations": [{ "text": "各灘頭連成一線", "lng": -0.95, "lat": 49.33 }]
+    },
+    {
+      "id": "p4",
+      "title": "目標：卡昂",
+      "date": "1944-06-10",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [-0.4, 49.24], "zoom": 10, "bearing": -12, "pitch": 42 },
+      "movements": [
+        { "id": "i-caen", "label": "南下卡昂", "factionId": "allies", "style": "advance", "path": [[-0.34, 49.29], [-0.37, 49.1829]], "drawDurationSec": 5 }
+      ],
+      "annotations": [{ "text": "卡昂：D-Day 未竟之目標,激戰至七月", "lng": -0.37, "lat": 49.1829 }]
+    }
+  ]
+}

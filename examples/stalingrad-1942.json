@@ -1,0 +1,86 @@
+{
+  "meta": {
+    "title": "史達林格勒戰役",
+    "subtitle": "1942 天王星行動・鉗形合圍",
+    "aspectRatio": "16:9",
+    "basemapStyle": "positron",
+    "titlePosition": "top-center",
+    "attribution": "© OpenStreetMap, OpenFreeMap"
+  },
+  "factions": [
+    { "id": "german", "name": "德軍第六軍（軸心）", "color": "#8a8f98" },
+    { "id": "soviet", "name": "蘇聯紅軍", "color": "#d6534d" }
+  ],
+  "places": [
+    { "id": "stalingrad", "name": "史達林格勒", "lng": 44.5018, "lat": 48.708, "kind": "city", "note": "伏爾加河西岸的工業大城,巷戰焦點。" },
+    { "id": "kalach", "name": "卡拉奇", "lng": 43.5333, "lat": 48.7, "kind": "battle", "appearAtPhase": "p3", "note": "頓河渡口,蘇軍南北兩鉗的會師點。" },
+    { "id": "serafimovich", "name": "謝拉菲莫維奇", "lng": 42.7414, "lat": 49.5739, "kind": "terrain", "appearAtPhase": "p2", "note": "頓河北岸橋頭堡,北鉗突破出發地。" },
+    { "id": "kletskaya", "name": "克列茨卡亞", "lng": 43.0833, "lat": 49.3167, "kind": "terrain", "appearAtPhase": "p2", "note": "北鉗突破地段,當面為羅馬尼亞第三軍。" },
+    { "id": "abganerovo", "name": "阿布加涅羅沃", "lng": 44.05, "lat": 48.13, "kind": "terrain", "appearAtPhase": "p2", "note": "城南方的南鉗突破出發地。" }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "德軍攻入史達林格勒",
+      "date": "1942-09",
+      "durationSec": 7,
+      "transitionSec": 2.5,
+      "camera": { "center": [44.42, 48.72], "zoom": 9, "bearing": 0, "pitch": 30 },
+      "movements": [
+        {
+          "id": "g-assault", "label": "德軍西面強攻", "factionId": "german", "style": "advance",
+          "path": [[44.0, 48.78], [44.3, 48.74], [44.5018, 48.708]], "drawDurationSec": 5
+        }
+      ],
+      "annotations": [{ "text": "巷戰膠著於伏爾加河畔", "lng": 44.5018, "lat": 48.708 }]
+    },
+    {
+      "id": "p2",
+      "title": "天王星行動：南北集結突破",
+      "date": "1942-11-19",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [43.6, 48.85], "zoom": 7.3, "bearing": 0, "pitch": 26 },
+      "movements": [
+        {
+          "id": "s-north", "label": "北鉗突破", "factionId": "soviet", "style": "advance",
+          "path": [[42.7414, 49.5739], [43.0833, 49.3167], [43.4, 49.05]], "drawDurationSec": 5
+        },
+        {
+          "id": "s-south", "label": "南鉗突破", "factionId": "soviet", "style": "advance",
+          "path": [[44.6, 48.25], [44.05, 48.13], [43.7, 48.35]], "drawDurationSec": 5
+        }
+      ],
+      "annotations": [{ "text": "蘇軍自兩翼薄弱處同時突破", "lng": 43.5, "lat": 49.05 }]
+    },
+    {
+      "id": "p3",
+      "title": "鉗形合攏・卡拉奇會師",
+      "date": "1942-11-23",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [43.85, 48.78], "zoom": 8, "bearing": -8, "pitch": 32 },
+      "movements": [
+        {
+          "id": "s-north2", "label": "北鉗南下", "factionId": "soviet", "style": "advance",
+          "path": [[43.4, 49.05], [43.5333, 48.7]], "drawDurationSec": 4
+        },
+        {
+          "id": "s-south2", "label": "南鉗北上", "factionId": "soviet", "style": "advance",
+          "path": [[43.7, 48.35], [43.5333, 48.7]], "drawDurationSec": 4
+        }
+      ],
+      "annotations": [{ "text": "兩鉗於卡拉奇會師,合圍完成", "lng": 43.5333, "lat": 48.7 }]
+    },
+    {
+      "id": "p4",
+      "title": "德軍第六軍被圍",
+      "date": "1942-11-23",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": { "center": [44.2, 48.7], "zoom": 8.4, "bearing": 0, "pitch": 28 },
+      "movements": [],
+      "annotations": [{ "text": "德軍第六軍約 29 萬人被困包圍圈", "lng": 44.3, "lat": 48.72 }]
+    }
+  ]
+}

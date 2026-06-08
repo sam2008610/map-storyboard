@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>史地具象化 — 戰史地圖工具</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3ede1; --paper-2:#e9e0cf; --ink:#22201c; --ink-soft:#5b554c;
+    --rule:#cabfa8; --gov:#a8232b; --shogun:#23427a; --betray:#b5560f;
+    --terrain:#5a6b4d; --accent:#7a1f1f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Noto Sans TC",sans-serif;color:var(--ink);background:var(--paper);
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  header{
+    padding:14px 22px;border-bottom:1px solid var(--rule);
+    background:linear-gradient(180deg,#f6f0e4,#eee5d3);
+    display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+  }
+  header h1{
+    font-family:"Noto Serif TC",serif;font-weight:900;font-size:20px;letter-spacing:.06em;
+  }
+  header h1 .seal{
+    display:inline-block;background:var(--accent);color:#f3ede1;font-size:13px;
+    padding:1px 7px;border-radius:2px;margin-right:8px;vertical-align:middle;letter-spacing:.15em;
+  }
+  header .subtitle{font-size:12.5px;color:var(--ink-soft);font-family:"Noto Serif TC",serif}
+  .wrap{flex:1;display:flex;min-height:0}
+  /* ---- side panel ---- */
+  aside{
+    width:380px;min-width:380px;border-right:1px solid var(--rule);
+    background:var(--paper);overflow-y:auto;display:flex;flex-direction:column;
+  }
+  .panel{padding:16px 18px;border-bottom:1px solid var(--rule)}
+  .panel h2{
+    font-family:"Noto Serif TC",serif;font-size:14px;font-weight:700;letter-spacing:.08em;
+    margin-bottom:10px;color:var(--ink);display:flex;align-items:center;gap:8px;
+  }
+  .panel h2::before{content:"";width:4px;height:14px;background:var(--accent);display:inline-block}
+  textarea{
+    width:100%;border:1px solid var(--rule);background:#fbf7ee;border-radius:4px;
+    padding:10px;font-family:"Noto Serif TC",serif;font-size:13px;line-height:1.7;color:var(--ink);
+    resize:vertical;
+  }
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  button{
+    font-family:"Noto Sans TC",sans-serif;font-size:13px;font-weight:500;cursor:pointer;
+    border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    padding:8px 14px;border-radius:3px;transition:.15s;letter-spacing:.04em;
+  }
+  button:hover{background:#000}
+  button.ghost{background:transparent;color:var(--ink)}
+  button.ghost:hover{background:var(--paper-2)}
+  button:disabled{opacity:.5;cursor:wait}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6}
+  .status{font-size:12px;margin-top:8px;min-height:16px;color:var(--ink-soft)}
+  .status.err{color:var(--gov)}
+  /* legend */
+  .legend-item{display:flex;align-items:center;gap:9px;font-size:12.5px;margin:5px 0}
+  .swatch{width:22px;height:0;border-top:3px solid;flex-shrink:0}
+  .swatch.dash{border-top-style:dashed}
+  .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+  /* place/movement lists */
+  .item{
+    font-size:12.5px;padding:7px 9px;border:1px solid var(--rule);border-radius:4px;
+    margin-bottom:6px;background:#fbf7ee;cursor:pointer;transition:.12s;line-height:1.55;
+  }
+  .item:hover{background:#fff;border-color:var(--ink-soft)}
+  .item b{font-family:"Noto Serif TC",serif}
+  .item .tag{font-size:10.5px;padding:1px 6px;border-radius:99px;color:#fff;margin-left:6px;vertical-align:middle}
+  details summary{cursor:pointer;font-size:12.5px;color:var(--ink-soft);font-weight:500}
+  /* map */
+  #map{flex:1;min-width:0;background:#dfe6dc}
+  .leaflet-popup-content{font-family:"Noto Sans TC",sans-serif;font-size:13px;line-height:1.7;color:var(--ink)}
+  .leaflet-popup-content b{font-family:"Noto Serif TC",serif;font-size:15px}
+  .marker-label{
+    font-family:"Noto Serif TC",serif;font-weight:700;font-size:13px;color:var(--ink);
+    text-shadow:0 0 3px #f3ede1,0 0 3px #f3ede1,0 0 3px #f3ede1,0 0 6px #f3ede1;
+    background:none;border:none;white-space:nowrap;
+  }
+  .arrow svg{display:block}
+  @media(max-width:820px){
+    .wrap{flex-direction:column}
+    aside{width:100%;min-width:0;max-height:48%;border-right:none;border-bottom:1px solid var(--rule)}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="seal">戊辰</span>史地具象化工具</h1>
+  <span class="subtitle">把書中的地點與行軍描述，畫成可讀的戰史地圖</span>
+</header>
+
+<div class="wrap">
+  <aside>
+    <div class="panel">
+      <h2>地圖圖層</h2>
+      <div class="row">
+        <button class="ghost" id="base-plain">簡圖</button>
+        <button class="ghost" id="base-topo">地形圖（看山勢隘口）</button>
+      </div>
+      <div class="hint">地形圖能看出男山與天王山夾淀川形成的隘口 — 京阪之間的咽喉。</div>
+    </div>
+
+    <div class="panel">
+      <h2>圖例</h2>
+      <div class="legend-item"><span class="swatch" style="border-color:var(--shogun)"></span>舊幕府軍 行軍／退卻</div>
+      <div class="legend-item"><span class="swatch dash" style="border-color:var(--betray)"></span>倒戈・砲擊</div>
+      <div class="legend-item"><span class="swatch" style="border-color:var(--gov)"></span>新政府軍 動向</div>
+      <div class="legend-item"><span class="dot" style="background:var(--terrain)"></span>地形（山・川）</div>
+      <div class="legend-item"><span class="dot" style="background:var(--shogun)"></span>據點・戰場</div>
+    </div>
+
+    <div class="panel">
+      <h2>分析新段落</h2>
+      <textarea id="passage" rows="6" placeholder="把書中描述地理或行軍的段落貼進來…"></textarea>
+      <div class="row">
+        <button id="analyze">用 AI 抽取地點與路線</button>
+        <button class="ghost" id="reset">載入範例</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="hint">AI 會從文字推估地點經緯度與行軍路線（古地名以最佳估計為準，務必對照書本與下方資料微調）。</div>
+    </div>
+
+    <div class="panel">
+      <h2>地點 <span id="place-count" style="font-weight:400;color:var(--ink-soft)"></span></h2>
+      <div id="place-list"></div>
+    </div>
+
+    <div class="panel">
+      <h2>行軍路線</h2>
+      <div id="move-list"></div>
+    </div>
+
+    <div class="panel">
+      <details>
+        <summary>進階：直接編輯資料 (JSON)</summary>
+        <textarea id="json" rows="10" style="margin-top:10px;font-family:monospace;font-size:11px"></textarea>
+        <div class="row"><button id="redraw">套用並重繪</button></div>
+        <div class="hint">手動修正座標、新增地點或路線後按此重繪。這就是把整本書「資料化」的格式。</div>
+      </details>
+    </div>
+  </aside>
+
+  <div id="map"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ============ 預載資料：戊辰戰爭・鳥羽伏見之戰 — 橋本・八幡兩地之戰 ============ */
+const SAMPLE = {
+  title: "鳥羽伏見之戰 — 橋本・八幡兩地之戰",
+  center: [34.905, 135.70], zoom: 12,
+  places: [
+    {name:"京都", lat:35.0117, lng:135.7680, side:"gov",     note:"新政府軍（薩摩・長州）所在，舊幕府軍進攻目標。"},
+    {name:"鳥羽", lat:34.9460, lng:135.7470, side:"clash",   note:"鳥羽口戰場。舊幕府軍沿鳥羽街道北上，於此與新政府軍交火。"},
+    {name:"伏見", lat:34.9320, lng:135.7610, side:"clash",   note:"伏見口戰場，與鳥羽同為開戰地。"},
+    {name:"淀（淀城）", lat:34.9089, lng:135.7237, side:"shogun", note:"舊幕府軍敗退至此欲入城據守，淀藩（稻葉家）閉門不納。"},
+    {name:"橋本", lat:34.8917, lng:135.6886, side:"shogun",  note:"舊幕府軍最後防線之一，扼淀川右岸。"},
+    {name:"八幡・男山", lat:34.8785, lng:135.6996, side:"terrain", note:"男山，西山山系南端、石清水八幡宮所在。與天王山夾淀川。"},
+    {name:"天王山", lat:34.8980, lng:135.6775, side:"terrain", note:"標高約278公尺。與男山夾淀川形成隘口，扼京阪間咽喉，淀川・舊街道・JR東海道線・新幹線・名神高速・國道171號皆由此通過。"},
+    {name:"山崎（大山崎）", lat:34.9036, lng:135.6856, side:"betray", note:"津藩（藤堂家）砲兵陣地。原屬幕府方，於此倒戈，自隘口西側越川砲擊橋本守軍。"},
+    {name:"大坂（大坂城）", lat:34.6873, lng:135.5259, side:"shogun", note:"舊幕府軍根據地。防線崩潰後全軍循此退卻；其後德川慶喜由海路東歸江戶。"}
+  ],
+  movements: [
+    {label:"① 舊幕府軍北上", side:"shogun", note:"自大坂沿淀川兩岸北進，分鳥羽・伏見兩路逼近京都。",
+     path:[[34.6873,135.5259],[34.84,135.62],[34.9089,135.7237],[34.932,135.761]]},
+    {label:"② 戰敗南退", side:"shogun", note:"鳥羽・伏見失利後南撤，淀城拒納，退守橋本・八幡一線。",
+     path:[[34.932,135.761],[34.9089,135.7237],[34.8917,135.6886]]},
+    {label:"③ 津藩倒戈砲擊", side:"betray", note:"津藩自山崎・天王山側越淀川砲擊橋本，幕軍遭夾擊，防線崩潰。",
+     path:[[34.9036,135.6856],[34.8917,135.6886]]},
+    {label:"④ 全軍退往大坂", side:"shogun", note:"橋本・八幡失守，舊幕府軍只剩撤往大坂一途。",
+     path:[[34.8917,135.6886],[34.84,135.62],[34.6873,135.5259]]}
+  ]
+};
+
+const COLORS = {gov:"#a8232b", shogun:"#23427a", betray:"#b5560f", clash:"#5a3c7a", terrain:"#5a6b4d", city:"#a8232b"};
+const SIDE_LABEL = {gov:"新政府軍", shogun:"舊幕府軍", betray:"倒戈", clash:"戰場", terrain:"地形", city:"據點"};
+
+/* ============ 地圖初始化 ============ */
+const map = L.map('map', {zoomControl:true}).setView(SAMPLE.center, SAMPLE.zoom);
+const plain = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  {maxZoom:19, attribution:'© OpenStreetMap, © CARTO'});
+const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+  {maxZoom:17, attribution:'© OpenTopoMap (CC-BY-SA), © OpenStreetMap'});
+plain.addTo(map);
+document.getElementById('base-plain').onclick = ()=>{ map.removeLayer(topo); plain.addTo(map); };
+document.getElementById('base-topo').onclick  = ()=>{ map.removeLayer(plain); topo.addTo(map); };
+
+let drawn = L.layerGroup().addTo(map);
+let markerRefs = {};
+
+function bearing(a,b){
+  const dy=b[0]-a[0], dx=(b[1]-a[1])*Math.cos(a[0]*Math.PI/180);
+  return Math.atan2(dx,dy)*180/Math.PI; // 0=正北，順時針
+}
+function arrowIcon(angle,color){
+  return L.divIcon({className:'arrow',iconSize:[20,20],iconAnchor:[10,10],
+    html:`<svg width="20" height="20" viewBox="0 0 20 20" style="transform:rotate(${angle}deg)">
+      <path d="M10 1 L16 17 L10 13 L4 17 Z" fill="${color}"/></svg>`});
+}
+
+function render(data){
+  drawn.clearLayers(); markerRefs = {};
+  // 路線
+  data.movements.forEach(m=>{
+    const c = COLORS[m.side] || "#444";
+    const dash = m.side==="betray";
+    L.polyline(m.path,{color:c,weight:3.5,opacity:.85,dashArray:dash?"7 7":null})
+      .bindPopup(`<b>${m.label||"行軍"}</b><br>${m.note||""}`).addTo(drawn);
+    if(m.path.length>=2){
+      const ang = bearing(m.path[m.path.length-2], m.path[m.path.length-1]);
+      L.marker(m.path[m.path.length-1],{icon:arrowIcon(ang,c),interactive:false}).addTo(drawn);
+    }
+  });
+  // 地點
+  data.places.forEach(p=>{
+    const c = COLORS[p.side] || "#555";
+    const mk = L.circleMarker([p.lat,p.lng],{radius:7,color:"#fff",weight:2,fillColor:c,fillOpacity:1})
+      .bindPopup(`<b>${p.name}</b> <span style="color:${c}">［${SIDE_LABEL[p.side]||""}］</span><br>${p.note||""}`)
+      .bindTooltip(p.name,{permanent:true,direction:"right",className:"marker-label",offset:[8,0]})
+      .addTo(drawn);
+    markerRefs[p.name]=mk;
+  });
+  // 視野
+  const pts = [...data.places.map(p=>[p.lat,p.lng]), ...data.movements.flatMap(m=>m.path)];
+  if(pts.length) map.fitBounds(pts,{padding:[40,40]});
+  buildLists(data);
+  document.getElementById('json').value = JSON.stringify(data,null,2);
+}
+
+function buildLists(data){
+  document.getElementById('place-count').textContent = `(${data.places.length})`;
+  document.getElementById('place-list').innerHTML = data.places.map((p,i)=>
+    `<div class="item" data-name="${p.name}"><b>${p.name}</b>
+     <span class="tag" style="background:${COLORS[p.side]||'#555'}">${SIDE_LABEL[p.side]||'—'}</span>
+     <div style="color:var(--ink-soft);margin-top:3px">${p.note||""}</div></div>`).join("");
+  document.querySelectorAll('#place-list .item').forEach(el=>{
+    el.onclick=()=>{const m=markerRefs[el.dataset.name]; if(m){map.setView(m.getLatLng(),14); m.openPopup();}};
+  });
+  document.getElementById('move-list').innerHTML = data.movements.map(m=>
+    `<div class="item"><b>${m.label}</b>
+     <span class="tag" style="background:${COLORS[m.side]||'#555'}">${SIDE_LABEL[m.side]||'—'}</span>
+     <div style="color:var(--ink-soft);margin-top:3px">${m.note||""}</div></div>`).join("");
+}
+
+/* ============ 控制 ============ */
+document.getElementById('reset').onclick = ()=>{ render(structuredClone(SAMPLE)); setStatus(""); };
+document.getElementById('redraw').onclick = ()=>{
+  try{ render(JSON.parse(document.getElementById('json').value)); setStatus("已重繪"); }
+  catch(e){ setStatus("JSON 格式有誤："+e.message,true); }
+};
+function setStatus(t,err){const s=document.getElementById('status');s.textContent=t;s.className="status"+(err?" err":"");}
+
+/* ============ AI 抽取（呼叫 Claude）============ */
+document.getElementById('analyze').onclick = async ()=>{
+  const text = document.getElementById('passage').value.trim();
+  if(!text){ setStatus("請先貼上一段文字",true); return; }
+  const btn = document.getElementById('analyze'); btn.disabled=true; setStatus("分析中…");
+  const prompt = `你是歷史地理分析助手。讀以下中文歷史段落，抽取其中的地點與軍隊移動，輸出「純 JSON」（不要任何說明文字或 markdown 反引號）。
+格式：
+{"title":"標題","center":[緯度,經度],"zoom":11,
+ "places":[{"name":"地名","lat":緯度,"lng":經度,"side":"gov|shogun|betray|clash|terrain|city","note":"一句說明"}],
+ "movements":[{"label":"① 簡短標題","side":"gov|shogun|betray","note":"說明","path":[[緯度,經度],[緯度,經度]]}]}
+規則：side 中 gov=新政府/官軍、shogun=舊幕府/我方主體、betray=倒戈或砲擊、clash=雙方交戰地、terrain=山川地形、city=城市據點。經緯度用你對該地點現代位置的最佳估計（日本地名用現代對應地）。path 依文字描述串起合理的行進點。只輸出 JSON。
+
+段落：
+${text}`;
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,
+        messages:[{role:"user",content:prompt}]})
+    });
+    const data = await res.json();
+    const raw = data.content.filter(b=>b.type==="text").map(b=>b.text).join("").replace(/```json|```/g,"").trim();
+    const parsed = JSON.parse(raw);
+    if(parsed.center) map.setView(parsed.center, parsed.zoom||11);
+    render(parsed);
+    setStatus(`完成：${parsed.places?.length||0} 個地點、${parsed.movements?.length||0} 條路線。請對照書本微調。`);
+  }catch(e){
+    setStatus("分析失敗（可能此環境未開放 AI 呼叫）。可改用下方『編輯資料 JSON』手動建立。",true);
+    console.error(e);
+  }finally{ btn.disabled=false; }
+};
+
+/* 啟動 */
+render(structuredClone(SAMPLE));
+setTimeout(()=>map.invalidateSize(),200);
+</script>
+</body>
+</html>

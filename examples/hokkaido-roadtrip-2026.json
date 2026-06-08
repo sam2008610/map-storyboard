@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "title": "北海道自駕 9 日",
+    "subtitle": "2026/3/28–4/5 道東・道央環島",
+    "aspectRatio": "16:9",
+    "basemapStyle": "liberty",
+    "titlePosition": "top-center",
+    "attribution": "© OpenStreetMap, OpenFreeMap"
+  },
+  "factions": [
+    { "id": "route", "name": "自駕路線", "color": "#3b82c4" },
+    { "id": "sight", "name": "景點", "color": "#3aa676" },
+    { "id": "food", "name": "美食", "color": "#e0813a" },
+    { "id": "stay", "name": "住宿", "color": "#9b6dd0" }
+  ],
+  "places": [
+    { "id": "obihiro_airport", "name": "帶廣機場", "lng": 143.217, "lat": 42.733, "kind": "city", "faction": "sight", "note": "Day1 抵達。" },
+    { "id": "butadon", "name": "帶廣豚丼", "lng": 143.197, "lat": 42.92, "kind": "city", "faction": "food", "note": "鄉土料理・鴨川。" },
+    { "id": "apa_obihiro", "name": "APA帶廣站前", "lng": 143.197, "lat": 42.917, "kind": "city", "faction": "stay" },
+
+    { "id": "crane_park", "name": "丹頂鶴自然公園", "lng": 144.328, "lat": 43.085, "kind": "terrain", "faction": "sight", "appearAtPhase": "p2" },
+    { "id": "kushiro_zoo", "name": "釧路市動物園", "lng": 144.33, "lat": 43.062, "kind": "city", "faction": "sight", "appearAtPhase": "p2", "note": "opt。" },
+    { "id": "marsh_obs", "name": "釧路濕原展望台", "lng": 144.329, "lat": 43.082, "kind": "terrain", "faction": "sight", "appearAtPhase": "p2" },
+    { "id": "nusamai", "name": "幣舞橋（夕陽）", "lng": 144.382, "lat": 42.987, "kind": "city", "faction": "sight", "appearAtPhase": "p2" },
+    { "id": "kushiro_ramen", "name": "釧路拉麵", "lng": 144.383, "lat": 42.99, "kind": "city", "faction": "food", "appearAtPhase": "p2" },
+    { "id": "kushiro_prince", "name": "釧路王子大飯店", "lng": 144.382, "lat": 42.989, "kind": "city", "faction": "stay", "appearAtPhase": "p2" },
+
+    { "id": "mashu1", "name": "摩周湖第一展望台", "lng": 144.53, "lat": 43.585, "kind": "terrain", "faction": "sight", "appearAtPhase": "p3" },
+    { "id": "mashu3", "name": "摩周湖第三展望台", "lng": 144.515, "lat": 43.604, "kind": "terrain", "faction": "sight", "appearAtPhase": "p3" },
+    { "id": "iozan", "name": "硫磺山", "lng": 144.443, "lat": 43.61, "kind": "terrain", "faction": "sight", "appearAtPhase": "p3" },
+    { "id": "sunayu", "name": "砂湯（屈斜路湖）", "lng": 144.345, "lat": 43.617, "kind": "terrain", "faction": "sight", "appearAtPhase": "p3" },
+    { "id": "heaven_road", "name": "通往天堂的路", "lng": 144.853, "lat": 43.898, "kind": "terrain", "faction": "sight", "appearAtPhase": "p3" },
+    { "id": "shiretoko_daiichi", "name": "知床第一飯店", "lng": 144.998, "lat": 44.073, "kind": "city", "faction": "stay", "appearAtPhase": "p3" },
+
+    { "id": "utoro", "name": "道之驛 宇登呂", "lng": 144.997, "lat": 44.075, "kind": "city", "faction": "sight", "appearAtPhase": "p4" },
+    { "id": "furepe", "name": "乙女之淚瀑布", "lng": 144.92, "lat": 44.086, "kind": "terrain", "faction": "sight", "appearAtPhase": "p4" },
+    { "id": "puyuni", "name": "プユニ岬", "lng": 144.985, "lat": 44.078, "kind": "terrain", "faction": "sight", "appearAtPhase": "p4" },
+    { "id": "kitahama", "name": "北濱車站", "lng": 144.357, "lat": 43.992, "kind": "city", "faction": "sight", "appearAtPhase": "p4" },
+    { "id": "notoro", "name": "能取岬", "lng": 144.222, "lat": 44.103, "kind": "terrain", "faction": "sight", "appearAtPhase": "p4" },
+    { "id": "abashiri_koso", "name": "網走湖莊大飯店", "lng": 144.205, "lat": 43.965, "kind": "city", "faction": "stay", "appearAtPhase": "p4" },
+
+    { "id": "prison", "name": "網走監獄博物館", "lng": 144.236, "lat": 44.02, "kind": "city", "faction": "sight", "appearAtPhase": "p5" },
+    { "id": "ryuhyo", "name": "鄂霍次克流冰館", "lng": 144.236, "lat": 44.016, "kind": "city", "faction": "sight", "appearAtPhase": "p5" },
+    { "id": "toriton", "name": "迴轉壽司 Toriton", "lng": 144.252, "lat": 44.013, "kind": "city", "faction": "food", "appearAtPhase": "p5" },
+    { "id": "merhen", "name": "童話之丘", "lng": 144.185, "lat": 43.875, "kind": "terrain", "faction": "sight", "appearAtPhase": "p5" },
+    { "id": "choyo", "name": "層雲峽 朝陽渡假飯店", "lng": 143.044, "lat": 43.722, "kind": "city", "faction": "stay", "appearAtPhase": "p5" },
+
+    { "id": "kurodake", "name": "黑岳纜車 層雲峽站", "lng": 143.044, "lat": 43.724, "kind": "terrain", "faction": "sight", "appearAtPhase": "p6" },
+    { "id": "daikokuya", "name": "成吉思汗大黑屋", "lng": 142.358, "lat": 43.762, "kind": "city", "faction": "food", "appearAtPhase": "p6" },
+    { "id": "ys_asahikawa", "name": "Y's Hotel 旭川站前", "lng": 142.357, "lat": 43.758, "kind": "city", "faction": "stay", "appearAtPhase": "p6" },
+
+    { "id": "asahiyama", "name": "旭山動物園", "lng": 142.481, "lat": 43.768, "kind": "city", "faction": "sight", "appearAtPhase": "p7" },
+    { "id": "aoba", "name": "青葉拉麵 本店", "lng": 142.365, "lat": 43.762, "kind": "city", "faction": "food", "appearAtPhase": "p7" },
+
+    { "id": "xmas_tree", "name": "孤獨聖誕樹", "lng": 142.466, "lat": 43.408, "kind": "terrain", "faction": "sight", "appearAtPhase": "p8" },
+    { "id": "kodamaya", "name": "蕎麥處 小玉家", "lng": 142.383, "lat": 43.341, "kind": "city", "faction": "food", "appearAtPhase": "p8" },
+    { "id": "ningle", "name": "森林精靈露台", "lng": 142.383, "lat": 43.317, "kind": "terrain", "faction": "sight", "appearAtPhase": "p8" },
+    { "id": "blue_pond", "name": "白金青池", "lng": 142.642, "lat": 43.497, "kind": "terrain", "faction": "sight", "appearAtPhase": "p8" },
+    { "id": "shirahige", "name": "白鬚瀑布", "lng": 142.65, "lat": 43.503, "kind": "terrain", "faction": "sight", "appearAtPhase": "p8" },
+    { "id": "natulux", "name": "Furano Natulux Hotel", "lng": 142.383, "lat": 43.342, "kind": "city", "faction": "stay", "appearAtPhase": "p8" },
+
+    { "id": "chitose", "name": "新千歲機場", "lng": 141.692, "lat": 42.792, "kind": "city", "faction": "sight", "appearAtPhase": "p9" }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "Day 1・抵達帶廣",
+      "date": "2026-03-28",
+      "durationSec": 5,
+      "transitionSec": 2,
+      "camera": { "center": [143.21, 42.83], "zoom": 10, "bearing": 0, "pitch": 24 },
+      "movements": [
+        { "id": "r1", "label": "機場→帶廣", "factionId": "route", "style": "advance",
+          "path": [[143.217, 42.733], [143.197, 42.917]], "drawDurationSec": 3.5 }
+      ],
+      "annotations": [{ "text": "Day 1・抵達帶廣,晚餐豚丼", "lng": 143.2, "lat": 42.86 }]
+    },
+    {
+      "id": "p2",
+      "title": "Day 2・帶廣→釧路",
+      "date": "2026-03-29",
+      "durationSec": 6,
+      "transitionSec": 2.5,
+      "camera": { "center": [144.3, 43.04], "zoom": 9.4, "bearing": 0, "pitch": 26 },
+      "movements": [
+        { "id": "r2", "label": "帶廣→釧路", "factionId": "route", "style": "advance",
+          "path": [[143.197, 42.917], [144.328, 43.085], [144.329, 43.082], [144.382, 42.987]], "drawDurationSec": 4.5 }
+      ],
+      "annotations": [{ "text": "Day 2・釧路濕原・丹頂鶴,幣舞橋夕陽", "lng": 144.3, "lat": 43.13 }]
+    },
+    {
+      "id": "p3",
+      "title": "Day 3・阿寒摩周→知床",
+      "date": "2026-03-30",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": { "center": [144.62, 43.74], "zoom": 8.4, "bearing": 0, "pitch": 28 },
+      "movements": [
+        { "id": "r3", "label": "釧路→摩周→知床", "factionId": "route", "style": "advance",
+          "path": [[144.382, 42.989], [144.53, 43.585], [144.443, 43.61], [144.345, 43.617], [144.853, 43.898], [144.998, 44.073]], "drawDurationSec": 5.5 }
+      ],
+      "annotations": [{ "text": "Day 3・摩周湖・硫磺山・砂湯,夜抵知床", "lng": 144.45, "lat": 43.5 }]
+    },
+    {
+      "id": "p4",
+      "title": "Day 4・知床→網走",
+      "date": "2026-03-31",
+      "durationSec": 6,
+      "transitionSec": 2.5,
+      "camera": { "center": [144.6, 44.05], "zoom": 8.6, "bearing": 0, "pitch": 26 },
+      "movements": [
+        { "id": "r4", "label": "知床→網走", "factionId": "route", "style": "advance",
+          "path": [[144.998, 44.073], [144.92, 44.086], [144.357, 43.992], [144.222, 44.103], [144.205, 43.965]], "drawDurationSec": 4.5 }
+      ],
+      "annotations": [{ "text": "Day 4・知床岬角巡禮,轉往網走", "lng": 144.6, "lat": 44.16 }]
+    },
+    {
+      "id": "p5",
+      "title": "Day 5・網走→層雲峽",
+      "date": "2026-04-01",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": { "center": [143.66, 43.94], "zoom": 7.8, "bearing": 0, "pitch": 26 },
+      "movements": [
+        { "id": "r5", "label": "網走→層雲峽", "factionId": "route", "style": "advance",
+          "path": [[144.205, 43.965], [144.236, 44.02], [144.185, 43.875], [143.044, 43.722]], "drawDurationSec": 5.5 }
+      ],
+      "annotations": [{ "text": "Day 5・網走監獄・流冰館,夜宿層雲峽", "lng": 143.7, "lat": 44.05 }]
+    },
+    {
+      "id": "p6",
+      "title": "Day 6・層雲峽→旭川",
+      "date": "2026-04-02",
+      "durationSec": 5,
+      "transitionSec": 2.5,
+      "camera": { "center": [142.7, 43.74], "zoom": 9, "bearing": 0, "pitch": 26 },
+      "movements": [
+        { "id": "r6", "label": "層雲峽→旭川", "factionId": "route", "style": "advance",
+          "path": [[143.044, 43.722], [142.357, 43.758]], "drawDurationSec": 3.5 }
+      ],
+      "annotations": [{ "text": "Day 6・黑岳纜車,移動旭川", "lng": 142.72, "lat": 43.81 }]
+    },
+    {
+      "id": "p7",
+      "title": "Day 7・旭川",
+      "date": "2026-04-03",
+      "durationSec": 6,
+      "transitionSec": 2.5,
+      "camera": { "center": [142.42, 43.76], "zoom": 10.4, "bearing": 0, "pitch": 26 },
+      "movements": [
+        { "id": "r7", "label": "市區→旭山動物園", "factionId": "route", "style": "advance",
+          "path": [[142.357, 43.758], [142.481, 43.768]], "drawDurationSec": 3.5 }
+      ],
+      "annotations": [{ "text": "Day 7・旭山動物園・旭川拉麵", "lng": 142.42, "lat": 43.8 }]
+    },
+    {
+      "id": "p8",
+      "title": "Day 8・富良野・美瑛",
+      "date": "2026-04-04",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": { "center": [142.5, 43.42], "zoom": 9.4, "bearing": 0, "pitch": 28 },
+      "movements": [
+        { "id": "r8", "label": "旭川→富良野→美瑛", "factionId": "route", "style": "advance",
+          "path": [[142.357, 43.758], [142.466, 43.408], [142.383, 43.342], [142.642, 43.497], [142.383, 43.342]], "drawDurationSec": 5.5 }
+      ],
+      "annotations": [{ "text": "Day 8・孤獨聖誕樹・白金青池", "lng": 142.5, "lat": 43.55 }]
+    },
+    {
+      "id": "p9",
+      "title": "Day 9・返航",
+      "date": "2026-04-05",
+      "durationSec": 5,
+      "transitionSec": 3,
+      "camera": { "center": [142.05, 43.07], "zoom": 8, "bearing": 0, "pitch": 22 },
+      "movements": [
+        { "id": "r9", "label": "富良野→新千歲", "factionId": "route", "style": "advance",
+          "path": [[142.383, 43.342], [141.692, 42.792]], "drawDurationSec": 4 }
+      ],
+      "annotations": [{ "text": "Day 9・新千歲返航,12:05 起飛", "lng": 142.05, "lat": 43.18 }]
+    }
+  ]
+}
