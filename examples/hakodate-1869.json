@@ -1,0 +1,634 @@
+{
+  "meta": {
+    "title": "箱館戰爭",
+    "subtitle": "1868–1869 戊辰戰爭最終局・蝦夷共和國的興亡",
+    "aspectRatio": "16:9",
+    "basemapStyle": "dark",
+    "titlePosition": "top-center",
+    "attribution": "© OpenStreetMap, OpenFreeMap"
+  },
+  "factions": [
+    {
+      "id": "ezo",
+      "name": "蝦夷共和國（舊幕府軍）",
+      "color": "#5b86d6"
+    },
+    {
+      "id": "gov",
+      "name": "新政府軍",
+      "color": "#d6534d"
+    }
+  ],
+  "places": [
+    {
+      "id": "matsushima",
+      "name": "松島灣",
+      "lng": 141.06,
+      "lat": 38.36,
+      "kind": "city",
+      "appearAtPhase": "p1",
+      "labelDir": "left",
+      "note": "榎本艦隊北航前的集結地。"
+    },
+    {
+      "id": "washinoki",
+      "name": "鷲ノ木",
+      "lng": 140.58,
+      "lat": 42.1,
+      "kind": "battle",
+      "faction": "ezo",
+      "appearAtPhase": "p1",
+      "labelDir": "top",
+      "note": "榎本軍登陸點(今森町附近)。"
+    },
+    {
+      "id": "hakodate",
+      "name": "箱館（函館）",
+      "lng": 140.7288,
+      "lat": 41.7687,
+      "kind": "city",
+      "appearAtPhase": "p2",
+      "labelDir": "bottom"
+    },
+    {
+      "id": "goryokaku",
+      "name": "五稜郭",
+      "lng": 140.7569,
+      "lat": 41.7969,
+      "kind": "castle",
+      "faction": "ezo",
+      "appearAtPhase": "p2",
+      "labelDir": "top",
+      "note": "蝦夷共和國的本營。"
+    },
+    {
+      "id": "matsumae",
+      "name": "松前城",
+      "lng": 140.1083,
+      "lat": 41.4303,
+      "kind": "castle",
+      "appearAtPhase": "p3",
+      "labelDir": "bottom"
+    },
+    {
+      "id": "esashi",
+      "name": "江差",
+      "lng": 140.1275,
+      "lat": 41.8694,
+      "kind": "city",
+      "appearAtPhase": "p3",
+      "labelDir": "top"
+    },
+    {
+      "id": "miyako",
+      "name": "宮古灣",
+      "lng": 141.95,
+      "lat": 39.64,
+      "kind": "battle",
+      "appearAtPhase": "p4",
+      "labelDir": "right"
+    },
+    {
+      "id": "otobe",
+      "name": "乙部",
+      "lng": 140.1417,
+      "lat": 41.9678,
+      "kind": "battle",
+      "faction": "gov",
+      "appearAtPhase": "p5",
+      "labelDir": "top"
+    },
+    {
+      "id": "kikonai",
+      "name": "木古内",
+      "lng": 140.4378,
+      "lat": 41.6786,
+      "kind": "city",
+      "appearAtPhase": "p5",
+      "labelDir": "bottom"
+    },
+    {
+      "id": "futamata",
+      "name": "二股口",
+      "lng": 140.4,
+      "lat": 41.8,
+      "kind": "battle",
+      "appearAtPhase": "p5",
+      "labelDir": "top",
+      "note": "土方歲三死守的隘口。"
+    },
+    {
+      "id": "nanaehama",
+      "name": "七重濱",
+      "lng": 140.69,
+      "lat": 41.805,
+      "kind": "battle",
+      "faction": "gov",
+      "appearAtPhase": "p6",
+      "labelDir": "top"
+    },
+    {
+      "id": "benten",
+      "name": "弁天台場",
+      "lng": 140.7085,
+      "lat": 41.777,
+      "kind": "castle",
+      "appearAtPhase": "p6",
+      "labelDir": "left"
+    },
+    {
+      "id": "ippongi",
+      "name": "一本木關門",
+      "lng": 140.726,
+      "lat": 41.784,
+      "kind": "battle",
+      "appearAtPhase": "p7",
+      "labelDir": "right"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "榎本艦隊北航",
+      "date": "1868-10",
+      "durationSec": 7,
+      "transitionSec": 2,
+      "camera": {
+        "center": [
+          140.9,
+          40.3
+        ],
+        "zoom": 6,
+        "bearing": 0,
+        "pitch": 20
+      },
+      "movements": [
+        {
+          "id": "m-fleet",
+          "label": "艦隊北航",
+          "factionId": "ezo",
+          "style": "naval",
+          "persist": false,
+          "path": [
+            [
+              141.06,
+              38.36
+            ],
+            [
+              141.6,
+              39.8
+            ],
+            [
+              141.4,
+              41.0
+            ],
+            [
+              140.85,
+              41.85
+            ],
+            [
+              140.58,
+              42.1
+            ]
+          ],
+          "drawDurationSec": 5.5
+        }
+      ],
+      "annotations": [
+        {
+          "text": "榎本武揚率舊幕府艦隊脫出江戶,北航蝦夷地",
+          "lng": 141.2,
+          "lat": 40.1
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "title": "鷲ノ木登陸・進攻箱館",
+      "date": "1868-10",
+      "durationSec": 8,
+      "transitionSec": 2.5,
+      "camera": {
+        "center": [
+          140.66,
+          41.92
+        ],
+        "zoom": 8.6,
+        "bearing": 0,
+        "pitch": 30
+      },
+      "movements": [
+        {
+          "id": "m-gory",
+          "label": "進取五稜郭",
+          "factionId": "ezo",
+          "style": "advance",
+          "startSec": 0,
+          "path": [
+            [
+              140.58,
+              42.1
+            ],
+            [
+              140.7,
+              41.95
+            ],
+            [
+              140.7569,
+              41.7969
+            ]
+          ],
+          "drawDurationSec": 4.5
+        },
+        {
+          "id": "m-hako",
+          "label": "進取箱館",
+          "factionId": "ezo",
+          "style": "advance",
+          "startSec": 2.5,
+          "path": [
+            [
+              140.58,
+              42.1
+            ],
+            [
+              140.66,
+              41.9
+            ],
+            [
+              140.7288,
+              41.7687
+            ]
+          ],
+          "drawDurationSec": 4.5
+        }
+      ],
+      "annotations": [
+        {
+          "text": "兵分二路南下,直取五稜郭與箱館",
+          "lng": 140.6,
+          "lat": 41.99
+        }
+      ]
+    },
+    {
+      "id": "p3",
+      "title": "占領全島・蝦夷共和國成立",
+      "date": "1868-12",
+      "durationSec": 9,
+      "transitionSec": 3,
+      "camera": {
+        "center": [
+          140.45,
+          41.7
+        ],
+        "zoom": 7.6,
+        "bearing": 0,
+        "pitch": 26
+      },
+      "movements": [
+        {
+          "id": "m-mae",
+          "label": "西征松前",
+          "factionId": "ezo",
+          "style": "advance",
+          "startSec": 0,
+          "persist": false,
+          "path": [
+            [
+              140.7569,
+              41.7969
+            ],
+            [
+              140.45,
+              41.6
+            ],
+            [
+              140.1083,
+              41.4303
+            ]
+          ],
+          "drawDurationSec": 5
+        },
+        {
+          "id": "m-esa",
+          "label": "北征江差",
+          "factionId": "ezo",
+          "style": "advance",
+          "startSec": 2.5,
+          "persist": false,
+          "path": [
+            [
+              140.7569,
+              41.7969
+            ],
+            [
+              140.4,
+              41.85
+            ],
+            [
+              140.1275,
+              41.8694
+            ]
+          ],
+          "drawDurationSec": 5
+        }
+      ],
+      "annotations": [
+        {
+          "text": "開陽丸於江差外海觸礁沉沒",
+          "lng": 140.13,
+          "lat": 41.92,
+          "startSec": 4
+        },
+        {
+          "text": "蝦夷共和國成立（1868.12）",
+          "lng": 140.45,
+          "lat": 41.52,
+          "startSec": 6.5,
+          "kind": "title"
+        }
+      ]
+    },
+    {
+      "id": "p4",
+      "title": "宮古灣海戰",
+      "date": "1869-03",
+      "durationSec": 7,
+      "camera": {
+        "center": [
+          141.95,
+          39.64
+        ],
+        "zoom": 9,
+        "bearing": 0,
+        "pitch": 25,
+        "transition": "cut"
+      },
+      "movements": [
+        {
+          "id": "m-kaiten",
+          "label": "回天突入",
+          "factionId": "ezo",
+          "style": "naval",
+          "persist": false,
+          "path": [
+            [
+              142.28,
+              39.66
+            ],
+            [
+              142.05,
+              39.65
+            ],
+            [
+              141.95,
+              39.64
+            ]
+          ],
+          "drawDurationSec": 4
+        }
+      ],
+      "annotations": [
+        {
+          "text": "回天奇襲宮古灣,欲奪甲鉄艦——失敗",
+          "lng": 141.98,
+          "lat": 39.71
+        }
+      ]
+    },
+    {
+      "id": "p5",
+      "title": "乙部登陸・三路反攻",
+      "date": "1869-04",
+      "durationSec": 9,
+      "camera": {
+        "center": [
+          140.4,
+          41.75
+        ],
+        "zoom": 7.8,
+        "bearing": 0,
+        "pitch": 26,
+        "transition": "cut"
+      },
+      "movements": [
+        {
+          "id": "m-r1",
+          "label": "松前口",
+          "factionId": "gov",
+          "style": "advance",
+          "startSec": 0,
+          "path": [
+            [
+              140.1417,
+              41.9678
+            ],
+            [
+              140.12,
+              41.7
+            ],
+            [
+              140.1083,
+              41.4303
+            ]
+          ],
+          "drawDurationSec": 5,
+          "persist": false
+        },
+        {
+          "id": "m-r2",
+          "label": "木古内口",
+          "factionId": "gov",
+          "style": "advance",
+          "startSec": 2,
+          "path": [
+            [
+              140.1417,
+              41.9678
+            ],
+            [
+              140.3,
+              41.8
+            ],
+            [
+              140.4378,
+              41.6786
+            ]
+          ],
+          "drawDurationSec": 5,
+          "persist": false
+        },
+        {
+          "id": "m-r3",
+          "label": "二股口",
+          "factionId": "gov",
+          "style": "advance",
+          "startSec": 4,
+          "path": [
+            [
+              140.1417,
+              41.9678
+            ],
+            [
+              140.3,
+              41.86
+            ],
+            [
+              140.4,
+              41.8
+            ]
+          ],
+          "drawDurationSec": 5,
+          "persist": false
+        }
+      ],
+      "annotations": [
+        {
+          "text": "新政府軍乙部登陸,三路進逼;土方歲三力守二股口",
+          "lng": 140.33,
+          "lat": 41.97
+        }
+      ]
+    },
+    {
+      "id": "p6",
+      "title": "箱館灣海戰・總攻擊",
+      "date": "1869-05-11",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": {
+        "center": [
+          140.72,
+          41.78
+        ],
+        "zoom": 11.4,
+        "bearing": 0,
+        "pitch": 45
+      },
+      "movements": [
+        {
+          "id": "m-navy",
+          "label": "突入箱館灣",
+          "factionId": "gov",
+          "style": "naval",
+          "startSec": 0,
+          "path": [
+            [
+              140.66,
+              41.74
+            ],
+            [
+              140.7,
+              41.765
+            ],
+            [
+              140.7085,
+              41.777
+            ]
+          ],
+          "drawDurationSec": 4
+        },
+        {
+          "id": "m-land",
+          "label": "登陸七重濱",
+          "factionId": "gov",
+          "style": "advance",
+          "startSec": 2,
+          "path": [
+            [
+              140.69,
+              41.805
+            ],
+            [
+              140.71,
+              41.79
+            ],
+            [
+              140.7288,
+              41.7687
+            ]
+          ],
+          "drawDurationSec": 4
+        }
+      ],
+      "annotations": [
+        {
+          "text": "箱館灣海戰,新政府軍登陸七重濱,總攻擊開始",
+          "lng": 140.7,
+          "lat": 41.73
+        }
+      ]
+    },
+    {
+      "id": "p7",
+      "title": "土方戰死",
+      "date": "1869-05-11",
+      "durationSec": 6,
+      "transitionSec": 3,
+      "camera": {
+        "center": [
+          140.74,
+          41.79
+        ],
+        "zoom": 13,
+        "bearing": 0,
+        "pitch": 50
+      },
+      "movements": [
+        {
+          "id": "m-retreat",
+          "label": "退守五稜郭",
+          "factionId": "ezo",
+          "style": "retreat",
+          "persist": false,
+          "path": [
+            [
+              140.726,
+              41.784
+            ],
+            [
+              140.7569,
+              41.7969
+            ]
+          ],
+          "drawDurationSec": 3
+        }
+      ],
+      "annotations": [
+        {
+          "text": "土方歲三於一本木關門中彈身亡",
+          "lng": 140.726,
+          "lat": 41.784,
+          "startSec": 1.5
+        }
+      ]
+    },
+    {
+      "id": "p8",
+      "title": "五稜郭開城",
+      "date": "1869-05-18",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": {
+        "center": [
+          140.7569,
+          41.7969
+        ],
+        "zoom": 13,
+        "bearing": 0,
+        "pitch": 40
+      },
+      "movements": [],
+      "annotations": [
+        {
+          "text": "五稜郭開城,蝦夷共和國亡——戊辰戰爭終結（1869.05.18）",
+          "lng": 140.7569,
+          "lat": 41.81,
+          "startSec": 1,
+          "kind": "title"
+        }
+      ]
+    }
+  ]
+}

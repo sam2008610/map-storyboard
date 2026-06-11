@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "title": "西南戰爭",
+    "subtitle": "1877 明治十年・最後的武士之亂",
+    "aspectRatio": "16:9",
+    "basemapStyle": "dark",
+    "titlePosition": "top-center",
+    "attribution": "© OpenStreetMap, OpenFreeMap"
+  },
+  "factions": [
+    { "id": "satsuma", "name": "薩軍（西鄉軍）", "color": "#5b86d6" },
+    { "id": "gov", "name": "政府軍（官軍）", "color": "#d6534d" }
+  ],
+  "places": [
+    { "id": "kagoshima", "name": "鹿兒島", "lng": 130.5571, "lat": 31.5969, "kind": "city", "faction": "satsuma", "appearAtPhase": "p1", "labelDir": "bottom", "note": "薩軍根據地。" },
+    { "id": "kumamoto", "name": "熊本城", "lng": 130.7059, "lat": 32.8064, "kind": "castle", "faction": "gov", "appearAtPhase": "p1", "labelDir": "right", "note": "政府軍鎮台所在,薩軍北上首要目標。" },
+    { "id": "takase", "name": "高瀨", "lng": 130.56, "lat": 32.93, "kind": "city", "appearAtPhase": "p3", "labelDir": "left" },
+    { "id": "tabaruzaka", "name": "田原坂", "lng": 130.658, "lat": 32.928, "kind": "battle", "appearAtPhase": "p3", "labelDir": "top", "note": "西南戰爭最激烈的決戰地,血戰十七日。" },
+    { "id": "ueki", "name": "植木", "lng": 130.703, "lat": 32.883, "kind": "battle", "appearAtPhase": "p3", "labelDir": "right" },
+    { "id": "hitoyoshi", "name": "人吉", "lng": 130.762, "lat": 32.21, "kind": "city", "appearAtPhase": "p4", "labelDir": "left" },
+    { "id": "miyakonojo", "name": "都城", "lng": 131.061, "lat": 31.721, "kind": "city", "appearAtPhase": "p5", "labelDir": "bottom" },
+    { "id": "miyazaki", "name": "宮崎", "lng": 131.424, "lat": 31.911, "kind": "city", "appearAtPhase": "p5", "labelDir": "right" },
+    { "id": "nobeoka", "name": "延岡", "lng": 131.665, "lat": 32.582, "kind": "city", "appearAtPhase": "p6", "labelDir": "right" },
+    { "id": "wadagoe", "name": "和田越", "lng": 131.6, "lat": 32.55, "kind": "battle", "appearAtPhase": "p6", "labelDir": "left" },
+    { "id": "enodake", "name": "可愛岳", "lng": 131.55, "lat": 32.62, "kind": "terrain", "appearAtPhase": "p7", "labelDir": "top" },
+    { "id": "shiroyama", "name": "城山", "lng": 130.552, "lat": 31.598, "kind": "battle", "faction": "satsuma", "appearAtPhase": "p8", "labelDir": "top", "note": "西鄉隆盛最後據守、自刃之地。" }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "title": "舉兵北上",
+      "date": "1877-02",
+      "durationSec": 7,
+      "transitionSec": 2,
+      "camera": { "center": [130.63, 32.2], "zoom": 8, "bearing": 0, "pitch": 28 },
+      "movements": [
+        {
+          "id": "m-north", "label": "薩軍北上", "factionId": "satsuma", "style": "advance",
+          "path": [[130.5571, 31.5969], [130.55, 32.05], [130.65, 32.5], [130.7059, 32.8064]],
+          "drawDurationSec": 5
+        }
+      ],
+      "annotations": [
+        { "text": "西鄉隆盛舉兵,薩軍北上進逼熊本", "lng": 130.6, "lat": 32.25 }
+      ]
+    },
+    {
+      "id": "p2",
+      "title": "熊本城攻防",
+      "date": "1877-02 ~ 04",
+      "durationSec": 7,
+      "transitionSec": 2.5,
+      "camera": { "center": [130.71, 32.8], "zoom": 11, "bearing": 0, "pitch": 35 },
+      "movements": [
+        {
+          "id": "m-siege-s", "label": "南面圍攻", "factionId": "satsuma", "style": "advance", "startSec": 0,
+          "path": [[130.70, 32.74], [130.7059, 32.8064]], "drawDurationSec": 3.5
+        },
+        {
+          "id": "m-siege-e", "label": "東面圍攻", "factionId": "satsuma", "style": "advance", "startSec": 1.5,
+          "path": [[130.78, 32.81], [130.7059, 32.8064]], "drawDurationSec": 3.5
+        }
+      ],
+      "annotations": [
+        { "text": "薩軍圍熊本城", "lng": 130.71, "lat": 32.86 },
+        { "text": "鎮台死守五十餘日,城不下", "lng": 130.71, "lat": 32.75, "startSec": 3 }
+      ]
+    },
+    {
+      "id": "p3",
+      "title": "田原坂之戰",
+      "date": "1877-03",
+      "durationSec": 9,
+      "transitionSec": 3,
+      "camera": { "center": [130.65, 32.9], "zoom": 11.5, "bearing": 0, "pitch": 40 },
+      "movements": [
+        {
+          "id": "m-g1", "label": "官軍南下", "factionId": "gov", "style": "advance", "startSec": 0,
+          "path": [[130.56, 32.93], [130.62, 32.93], [130.658, 32.928]], "drawDurationSec": 4
+        },
+        {
+          "id": "m-g2", "label": "植木方面", "factionId": "gov", "style": "advance", "startSec": 2,
+          "path": [[130.56, 32.95], [130.66, 32.91], [130.703, 32.883]], "drawDurationSec": 4
+        },
+        {
+          "id": "m-g3", "label": "突破田原坂", "factionId": "gov", "style": "artillery", "startSec": 4.5,
+          "path": [[130.64, 32.95], [130.658, 32.928]], "drawDurationSec": 3
+        }
+      ],
+      "annotations": [
+        { "text": "田原坂血戰十七日", "lng": 130.66, "lat": 32.96, "startSec": 0.5 },
+        { "text": "官軍突破,薩軍敗退", "lng": 130.65, "lat": 32.86, "startSec": 6.5, "kind": "title" }
+      ]
+    },
+    {
+      "id": "p4",
+      "title": "熊本解圍・薩軍南退",
+      "date": "1877-04",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": { "center": [130.70, 32.55], "zoom": 9, "bearing": 0, "pitch": 28 },
+      "movements": [
+        {
+          "id": "m-relief", "label": "官軍入熊本", "factionId": "gov", "style": "advance", "startSec": 0,
+          "path": [[130.658, 32.928], [130.7059, 32.8064]], "drawDurationSec": 3, "persist": false
+        },
+        {
+          "id": "m-retreat1", "label": "薩軍南退人吉", "factionId": "satsuma", "style": "retreat", "startSec": 2,
+          "path": [[130.7059, 32.8064], [130.72, 32.5], [130.762, 32.21]], "drawDurationSec": 4
+        }
+      ],
+      "annotations": [
+        { "text": "田原坂失守,官軍入熊本;薩軍南退人吉", "lng": 130.72, "lat": 32.6 }
+      ]
+    },
+    {
+      "id": "p5",
+      "title": "轉戰宮崎",
+      "date": "1877-05 ~ 07",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [131.0, 32.0], "zoom": 8, "bearing": 0, "pitch": 26 },
+      "movements": [
+        {
+          "id": "m-retreat2", "label": "薩軍轉戰", "factionId": "satsuma", "style": "retreat", "startSec": 0,
+          "path": [[130.762, 32.21], [131.061, 31.721], [131.424, 31.911]], "drawDurationSec": 5, "persist": false
+        },
+        {
+          "id": "m-pursue", "label": "官軍追擊", "factionId": "gov", "style": "advance", "startSec": 2.5,
+          "path": [[130.762, 32.21], [131.0, 31.9], [131.424, 31.911]], "drawDurationSec": 5, "persist": false
+        }
+      ],
+      "annotations": [
+        { "text": "薩軍輾轉人吉、都城、宮崎,節節抵抗", "lng": 131.0, "lat": 32.05 }
+      ]
+    },
+    {
+      "id": "p6",
+      "title": "和田越決戰・延岡合圍",
+      "date": "1877-08",
+      "durationSec": 8,
+      "transitionSec": 3,
+      "camera": { "center": [131.6, 32.5], "zoom": 10.5, "bearing": 0, "pitch": 38 },
+      "movements": [
+        {
+          "id": "m-enc1", "label": "官軍正面", "factionId": "gov", "style": "advance", "startSec": 0,
+          "path": [[131.5, 32.42], [131.6, 32.55]], "drawDurationSec": 3.5, "persist": false
+        },
+        {
+          "id": "m-enc2", "label": "官軍迂迴", "factionId": "gov", "style": "advance", "startSec": 2,
+          "path": [[131.72, 32.45], [131.665, 32.582]], "drawDurationSec": 3.5, "persist": false
+        }
+      ],
+      "annotations": [
+        { "text": "和田越決戰,薩軍大敗", "lng": 131.58, "lat": 32.5, "startSec": 0.5 },
+        { "text": "官軍合圍延岡", "lng": 131.66, "lat": 32.64, "startSec": 4, "kind": "title" }
+      ]
+    },
+    {
+      "id": "p7",
+      "title": "可愛岳突圍・歸薩長征",
+      "date": "1877-08 ~ 09",
+      "durationSec": 9,
+      "transitionSec": 3,
+      "camera": { "center": [131.0, 32.1], "zoom": 7.6, "bearing": 0, "pitch": 24 },
+      "movements": [
+        {
+          "id": "m-breakout", "label": "突破可愛岳・歸薩", "factionId": "satsuma", "style": "retreat", "startSec": 0,
+          "path": [[131.665, 32.582], [131.55, 32.62], [131.1, 32.1], [130.97, 31.99], [130.75, 31.78], [130.5571, 31.5969]],
+          "drawDurationSec": 7, "persist": false
+        }
+      ],
+      "annotations": [
+        { "text": "西鄉率殘部突破可愛岳,翻山長驅返回鹿兒島", "lng": 131.1, "lat": 32.2 }
+      ]
+    },
+    {
+      "id": "p8",
+      "title": "城山決戰",
+      "date": "1877-09-24",
+      "durationSec": 7,
+      "transitionSec": 3,
+      "camera": { "center": [130.552, 31.598], "zoom": 13, "bearing": 0, "pitch": 45 },
+      "movements": [
+        {
+          "id": "m-final1", "label": "官軍總攻", "factionId": "gov", "style": "advance", "startSec": 0,
+          "path": [[130.535, 31.585], [130.548, 31.596]], "drawDurationSec": 2.5
+        },
+        {
+          "id": "m-final2", "label": "官軍合圍", "factionId": "gov", "style": "advance", "startSec": 1.5,
+          "path": [[130.565, 31.59], [130.554, 31.598]], "drawDurationSec": 2.5
+        }
+      ],
+      "annotations": [
+        { "text": "官軍總攻城山", "lng": 130.552, "lat": 31.61, "startSec": 1 },
+        { "text": "西鄉隆盛自刃,西南戰爭終結（1877.09.24）", "lng": 130.552, "lat": 31.58, "startSec": 4, "kind": "title" }
+      ]
+    }
+  ]
+}

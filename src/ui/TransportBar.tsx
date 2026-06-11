@@ -10,6 +10,7 @@ interface Props {
   aspectRatio: AspectRatio;
   basemapId: string;
   exporting: boolean;
+  editMode: boolean;
   onToggle: () => void;
   onSeek: (t: number) => void;
   onAspect: (a: AspectRatio) => void;
@@ -27,11 +28,11 @@ function fmt(t: number) {
 export default function TransportBar(p: Props) {
   return (
     <div className="transport">
-      <button className="play" onClick={p.onToggle} disabled={p.exporting}>
+      <button className="play" onClick={p.onToggle} disabled={p.exporting || p.editMode}>
         {p.playing ? "❚❚" : "▶"}
       </button>
       <span className="time">
-        {fmt(p.currentTime)} / {fmt(p.duration)}
+        {p.editMode ? "編輯模式" : `${fmt(p.currentTime)} / ${fmt(p.duration)}`}
       </span>
       <input
         className="scrub"
@@ -41,7 +42,7 @@ export default function TransportBar(p: Props) {
         step={0.05}
         value={Math.min(p.currentTime, p.duration)}
         onChange={(e) => p.onSeek(parseFloat(e.target.value))}
-        disabled={p.exporting}
+        disabled={p.exporting || p.editMode}
       />
       <div className="aspects">
         {ASPECTS.map((a) => (
@@ -67,7 +68,7 @@ export default function TransportBar(p: Props) {
           </option>
         ))}
       </select>
-      <button className="export" onClick={p.onExport} disabled={p.exporting}>
+      <button className="export" onClick={p.onExport} disabled={p.exporting || p.editMode}>
         {p.exporting ? "匯出中…" : "匯出 WebM"}
       </button>
     </div>

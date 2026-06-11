@@ -6,7 +6,10 @@ import { Scene } from "../render/scene";
 import { TimelineClock } from "../engine/clock";
 import { recordWebM, downloadBlob } from "../export/recordWebM";
 import { drawOverlay } from "../render/overlay";
+import { updatePlaces, setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
 import type { StageController } from "./stageController";
+
+export type EditTool = "add-place" | null;
 
 const DIMS: Record<AspectRatio, [number, number]> = {
   "16:9": [1920, 1080],
@@ -22,6 +25,14 @@ interface Props {
   onTime: (t: number) => void;
   onDuration: (d: number) => void;
   onPlayState: (playing: boolean) => void;
+  // 編輯模式
+  editMode: boolean;
+  selectedPhaseIndex: number;
+  activeTool: EditTool;
+  selectedPlaceId: string | null;
+  onMapAddPlace: (lngLat: [number, number]) => void;
+  onSelectPlace: (id: string | null) => void;
+  onMovePlace: (id: string, lngLat: [number, number]) => void;
 }
 
 export default function MapStage({
@@ -32,6 +43,13 @@ export default function MapStage({
   onTime,
   onDuration,
   onPlayState,
+  editMode,
+  selectedPhaseIndex,
+  activeTool,
+  selectedPlaceId,
+  onMapAddPlace,
+  onSelectPlace,
+  onMovePlace,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null); // 外層，量可用空間
   const stageRef = useRef<HTMLDivElement>(null); // 固定解析度的地圖容器
@@ -43,6 +61,23 @@ export default function MapStage({
   const appliedBasemap = useRef(basemapId);
   const dimsRef = useRef<[number, number]>(DIMS[aspectRatio]);
   const [scale, setScale] = useState(1);
+
+  // 鏡像當前編輯狀態給穩定的地圖事件處理器使用
+  const editModeRef = useRef(editMode);
+  const toolRef = useRef<EditTool>(activeTool);
+  const selectedPhaseRef = useRef(selectedPhaseIndex);
+  const onAddRef = useRef(onMapAddPlace);
+  const onSelectRef = useRef(onSelectPlace);
+  const onMoveRef = useRef(onMovePlace);
+  const draggingRef = useRef<string | null>(null);
+  const selectedPlaceIdRef = useRef(selectedPlaceId);
+  editModeRef.current = editMode;
+  selectedPlaceIdRef.current = selectedPlaceId;
+  toolRef.current = activeTool;
+  selectedPhaseRef.current = selectedPhaseIndex;
+  onAddRef.current = onMapAddPlace;
+  onSelectRef.current = onSelectPlace;
+  onMoveRef.current = onMovePlace;
 
   const [w, h] = DIMS[aspectRatio];
   dimsRef.current = [w, h];
@@ -88,8 +123,61 @@ export default function MapStage({
       onTime(0);
     };
 
+    const reRender = () => {
+      if (editModeRef.current) scene.renderStatic(selectedPhaseRef.current);
+      else scene.render(Math.min(clockRef.current!.time, scene.totalDuration));
+    };
+
+    const attachEditHandlers = (map: MlMap, scene: Scene) => {
+      // 點地圖:加地點工具→落點;否則→選取/取消選取
+      map.on("click", (e) => {
+        if (!editModeRef.current) return;
+        if (toolRef.current === "add-place") {
+          onAddRef.current([e.lngLat.lng, e.lngLat.lat]);
+          return;
+        }
+        const feats = map.queryRenderedFeatures(e.point, { layers: [...placeInteractionLayers()] });
+        onSelectRef.current(feats.length ? ((feats[0].properties as any).id ?? null) : null);
+      });
+
+      // 拖曳地點(僅選取模式)
+      map.on("mousedown", "wm-place-hit", (e) => {
+        if (!editModeRef.current || toolRef.current) return;
+        const id = (e.features?.[0]?.properties as any)?.id;
+        if (!id) return;
+        e.preventDefault(); // 阻止地圖平移
+        draggingRef.current = id;
+        onSelectRef.current(id);
+        map.getCanvas().style.cursor = "grabbing";
+      });
+      map.on("mousemove", (e) => {
+        const id = draggingRef.current;
+        if (!id) return;
+        updatePlaces(map, docRef.current, scene.built, selectedPhaseRef.current, {
+          editMode: true,
+          override: { id, lng: e.lngLat.lng, lat: e.lngLat.lat },
+        });
+      });
+      map.on("mouseup", (e) => {
+        const id = draggingRef.current;
+        if (!id) return;
+        draggingRef.current = null;
+        map.getCanvas().style.cursor = "";
+        onMoveRef.current(id, [e.lngLat.lng, e.lngLat.lat]);
+      });
+
+      // hover 游標(選取模式)
+      map.on("mouseenter", "wm-place-hit", () => {
+        if (editModeRef.current && !toolRef.current) map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "wm-place-hit", () => {
+        if (!draggingRef.current && !toolRef.current) map.getCanvas().style.cursor = "";
+      });
+    };
+
     map.on("load", () => {
       setup();
+      attachEditHandlers(map, scene);
       const controller: StageController = {
         play: () => clockRef.current?.play(),
         pause: () => clockRef.current?.pause(),
@@ -99,7 +187,16 @@ export default function MapStage({
           docRef.current = d;
           scene.setDoc(d);
           buildClock();
-          scene.render(Math.min(clockRef.current!.time, scene.totalDuration));
+          reRender();
+        },
+        getCamera: () => {
+          const c = map.getCenter();
+          return {
+            center: [c.lng, c.lat],
+            zoom: map.getZoom(),
+            bearing: map.getBearing(),
+            pitch: map.getPitch(),
+          };
         },
         exportWebM: async () => {
           clockRef.current?.pause();
@@ -141,7 +238,13 @@ export default function MapStage({
     map.setStyle(basemapStyleUrl(basemapId));
     const onStyle = () => {
       scene.setup(basemapId);
-      scene.render(clockRef.current?.time ?? 0);
+      setPlaceEditMode(map, editModeRef.current);
+      if (editModeRef.current) {
+        scene.renderStatic(selectedPhaseRef.current);
+        setSelectedPlace(map, selectedPlaceIdRef.current);
+      } else {
+        scene.render(clockRef.current?.time ?? 0);
+      }
     };
     map.once("styledata", onStyle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -158,6 +261,36 @@ export default function MapStage({
   useEffect(() => {
     docRef.current = doc;
   }, [doc]);
+
+  // 進/出編輯模式、或切換選定分鏡:暫停時鐘+靜態顯示該分鏡(不動鏡頭),或回到播放畫面
+  useEffect(() => {
+    const scene = sceneRef.current;
+    const clock = clockRef.current;
+    const map = mapRef.current;
+    if (!scene || !clock || !map) return;
+    setPlaceEditMode(map, editMode);
+    if (editMode) {
+      clock.pause();
+      scene.renderStatic(selectedPhaseIndex);
+    } else {
+      setSelectedPlace(map, null);
+      map.getCanvas().style.cursor = "";
+      scene.render(clock.time);
+    }
+  }, [editMode, selectedPhaseIndex]);
+
+  // 選取高亮
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && editMode) setSelectedPlace(map, selectedPlaceId);
+  }, [selectedPlaceId, editMode]);
+
+  // 加地點工具→十字游標
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.getCanvas().style.cursor = editMode && activeTool === "add-place" ? "crosshair" : "";
+  }, [activeTool, editMode]);
 
   // 重畫預覽用的圖例 / 標題 overlay（doc 或比例改變時）
   useEffect(() => {

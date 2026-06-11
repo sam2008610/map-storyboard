@@ -8,6 +8,7 @@ interface Props {
   onApply: (doc: TimelineDoc) => void;
   onTitlePosition: (pos: TitlePosition) => void;
   top?: ReactNode;
+  editor?: ReactNode;
 }
 
 const TITLE_POS: { id: TitlePosition; label: string }[] = [
@@ -16,7 +17,7 @@ const TITLE_POS: { id: TitlePosition; label: string }[] = [
   { id: "top-right", label: "右上" },
 ];
 
-export default function Sidebar({ doc, onApply, onTitlePosition, top }: Props) {
+export default function Sidebar({ doc, onApply, onTitlePosition, top, editor }: Props) {
   const curPos = doc.meta.titlePosition ?? "top-left";
 
   return (
@@ -26,6 +27,7 @@ export default function Sidebar({ doc, onApply, onTitlePosition, top }: Props) {
         <h1>{doc.meta.title}</h1>
         {doc.meta.subtitle && <p className="sub">{doc.meta.subtitle}</p>}
       </header>
+      {editor}
 
       <section className="panel">
         <h2>陣營圖例</h2>

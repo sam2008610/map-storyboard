@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { AspectRatio, TimelineDoc, TitlePosition } from "./types/timeline";
+import type { AspectRatio, Place, TimelineDoc, TitlePosition } from "./types/timeline";
 import { DEFAULT_DOC, EXAMPLES, blankDoc } from "./data/examples";
 import {
   deleteProject,
@@ -11,11 +11,12 @@ import {
   type ProjectMeta,
 } from "./store/projects";
 import { DEFAULT_BASEMAP_ID } from "./map/basemaps";
-import MapStage from "./map/MapStage";
+import MapStage, { type EditTool } from "./map/MapStage";
 import type { StageController } from "./map/stageController";
 import Sidebar from "./ui/Sidebar";
 import ProjectBar from "./ui/ProjectBar";
 import TransportBar from "./ui/TransportBar";
+import EditorPanel from "./ui/EditorPanel";
 
 function withDefaultBasemap(doc: TimelineDoc): TimelineDoc {
   return { ...doc, meta: { ...doc.meta, basemapStyle: DEFAULT_BASEMAP_ID } };
@@ -43,6 +44,12 @@ export default function App() {
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
   const controllerRef = useRef<StageController | null>(null);
+
+  // ---- 編輯模式狀態 ----
+  const [editMode, setEditMode] = useState(false);
+  const [selectedPhaseIndex, setSelectedPhaseIndex] = useState(0);
+  const [activeTool, setActiveTool] = useState<EditTool>(null);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   const aspectRatio: AspectRatio = doc.meta.aspectRatio;
   const basemapId = doc.meta.basemapStyle;
@@ -138,6 +145,50 @@ export default function App() {
     }
   };
 
+  // ---- 編輯操作 ----
+  const toggleEditMode = () => {
+    setEditMode((v) => {
+      const next = !v;
+      if (next) setSelectedPhaseIndex((i) => Math.max(0, Math.min(i, doc.phases.length - 1)));
+      else {
+        setActiveTool(null);
+        setSelectedPlaceId(null);
+      }
+      return next;
+    });
+  };
+  const captureCamera = () => {
+    const cam = controllerRef.current?.getCamera();
+    if (!cam) return;
+    const phases = doc.phases.map((ph, i) => (i === selectedPhaseIndex ? { ...ph, camera: cam } : ph));
+    applyDoc({ ...doc, phases }, true);
+  };
+  const addPlace = (lngLat: [number, number]) => {
+    const phase = doc.phases[selectedPhaseIndex];
+    const id = "pl_" + Math.random().toString(36).slice(2, 8);
+    const place: Place = {
+      id,
+      name: "新地點",
+      lng: lngLat[0],
+      lat: lngLat[1],
+      kind: "city",
+      faction: doc.factions[0]?.id,
+      appearAtPhase: phase?.id,
+    };
+    applyDoc({ ...doc, places: [...doc.places, place] }, true);
+    setActiveTool(null);
+    setSelectedPlaceId(id);
+  };
+  const updatePlace = (id: string, patch: Partial<Place>) => {
+    applyDoc({ ...doc, places: doc.places.map((pl) => (pl.id === id ? { ...pl, ...patch } : pl)) }, true);
+  };
+  const movePlace = (id: string, lngLat: [number, number]) =>
+    updatePlace(id, { lng: lngLat[0], lat: lngLat[1] });
+  const deletePlace = (id: string) => {
+    applyDoc({ ...doc, places: doc.places.filter((pl) => pl.id !== id) }, true);
+    if (selectedPlaceId === id) setSelectedPlaceId(null);
+  };
+
   return (
     <div className="app">
       <Sidebar
@@ -163,6 +214,21 @@ export default function App() {
             onExport={handleExport}
           />
         }
+        editor={
+          <EditorPanel
+            doc={doc}
+            editMode={editMode}
+            selectedPhaseIndex={selectedPhaseIndex}
+            activeTool={activeTool}
+            selectedPlaceId={selectedPlaceId}
+            onToggleEditMode={toggleEditMode}
+            onSelectPhase={setSelectedPhaseIndex}
+            onSetTool={setActiveTool}
+            onCaptureCamera={captureCamera}
+            onUpdatePlace={updatePlace}
+            onDeletePlace={deletePlace}
+          />
+        }
       />
       <main className="main">
         <MapStage
@@ -173,6 +239,13 @@ export default function App() {
           onTime={setCurrentTime}
           onDuration={setDuration}
           onPlayState={setPlaying}
+          editMode={editMode}
+          selectedPhaseIndex={selectedPhaseIndex}
+          activeTool={activeTool}
+          selectedPlaceId={selectedPlaceId}
+          onMapAddPlace={addPlace}
+          onSelectPlace={setSelectedPlaceId}
+          onMovePlace={movePlace}
         />
         <TransportBar
           playing={playing}
@@ -181,6 +254,7 @@ export default function App() {
           aspectRatio={aspectRatio}
           basemapId={basemapId}
           exporting={exporting}
+          editMode={editMode}
           onToggle={() => controllerRef.current?.toggle()}
           onSeek={(t) => controllerRef.current?.seek(t)}
           onAspect={(a) => patchMeta({ aspectRatio: a })}

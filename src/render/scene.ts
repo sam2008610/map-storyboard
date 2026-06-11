@@ -44,6 +44,21 @@ export class Scene {
     this.map.jumpTo(cameraAt(this.built, at));
     updatePlaces(this.map, this.doc, this.built, idx);
     updateMovements(this.map, this.doc, this.built, idx, at.localT);
-    updateAnnotations(this.map, this.built, idx);
+    updateAnnotations(this.map, this.built, idx, at.localT);
+  }
+
+  /**
+   * 編輯模式靜態渲染:顯示「到選定分鏡為止」的內容(行軍全部畫完、地點全顯示),
+   * 但**不動鏡頭**,讓使用者自由操作地圖。override 供拖曳即時預覽。
+   */
+  renderStatic(
+    phaseIndex: number,
+    override?: { id: string; lng: number; lat: number }
+  ) {
+    const n = this.built.spans.length;
+    const idx = Math.max(0, Math.min(phaseIndex, n - 1));
+    updatePlaces(this.map, this.doc, this.built, idx, { editMode: true, override });
+    updateMovements(this.map, this.doc, this.built, idx, 1e9); // localT 極大 → frac=1
+    updateAnnotations(this.map, this.built, idx, 1e9);
   }
 }

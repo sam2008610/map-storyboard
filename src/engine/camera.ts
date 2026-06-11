@@ -27,7 +27,8 @@ function lerpCamera(from: Camera, to: Camera, t: number): Camera {
 export function cameraAt(built: BuiltTimeline, at: PhaseAt): Camera {
   const { span, transitionProgress } = at;
   const target = span.phase.camera;
-  if (span.index === 0) return target;
+  // 硬切:進入此 phase 直接定在目標鏡頭,不從上一鏡頭插值(用於遠距離跳轉)
+  if (span.index === 0 || target.transition === "cut") return target;
   const prev = built.spans[span.index - 1].phase.camera;
   return lerpCamera(prev, target, easeInOutCubic(transitionProgress));
 }

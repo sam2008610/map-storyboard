@@ -17,7 +17,7 @@ export function addAnnotationLayers(map: MlMap, basemapId: string) {
     layout: {
       "text-field": ["get", "text"],
       "text-font": ["Noto Sans Regular"],
-      "text-size": 15,
+      "text-size": ["match", ["get", "kind"], "title", 22, 15],
       "text-offset": [0, -1.6],
       "text-anchor": "bottom",
       "text-allow-overlap": true,
@@ -30,18 +30,21 @@ export function addAnnotationLayers(map: MlMap, basemapId: string) {
   });
 }
 
-/** 顯示當前 phase 的 annotations。 */
+/** 顯示當前 phase 中、已到 startSec 的 annotations。 */
 export function updateAnnotations(
   map: MlMap,
   built: BuiltTimeline,
-  currentIndex: number
+  currentIndex: number,
+  localT: number
 ) {
   const span = built.spans[currentIndex];
   const annots = span?.phase.annotations ?? [];
-  const features = annots.map((a) => ({
-    type: "Feature" as const,
-    geometry: { type: "Point" as const, coordinates: [a.lng, a.lat] },
-    properties: { text: a.text },
-  }));
+  const features = annots
+    .filter((a) => (a.startSec ?? 0) <= localT)
+    .map((a) => ({
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [a.lng, a.lat] },
+      properties: { text: a.text, kind: a.kind ?? "caption" },
+    }));
   (map.getSource(SRC) as any)?.setData({ type: "FeatureCollection", features });
 }

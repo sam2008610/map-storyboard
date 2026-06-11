@@ -49,7 +49,7 @@ export function addMovementLayers(map: MlMap) {
     id: "wm-mv-line-solid",
     type: "line",
     source: SRC_LINES,
-    filter: ["!", ["get", "dashed"]],
+    filter: ["match", ["get", "style"], ["advance", "retreat"], true, false],
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
       "line-color": ["get", "color"],
@@ -61,13 +61,26 @@ export function addMovementLayers(map: MlMap) {
     id: "wm-mv-line-dashed",
     type: "line",
     source: SRC_LINES,
-    filter: ["get", "dashed"],
+    filter: ["==", ["get", "style"], "artillery"],
     layout: { "line-cap": "butt", "line-join": "round" },
     paint: {
       "line-color": ["get", "color"],
       "line-width": 4,
       "line-opacity": 0.95,
       "line-dasharray": [2, 2],
+    },
+  });
+  map.addLayer({
+    id: "wm-mv-line-naval",
+    type: "line",
+    source: SRC_LINES,
+    filter: ["==", ["get", "style"], "naval"],
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": ["get", "color"],
+      "line-width": 3.5,
+      "line-opacity": 0.8,
+      "line-dasharray": [4, 3],
     },
   });
   map.addLayer({
@@ -100,11 +113,12 @@ export function updateMovements(
 
   for (const span of built.spans) {
     if (span.index > currentIndex) break;
+    const past = span.index < currentIndex;
     for (const mv of span.phase.movements) {
+      if (past && mv.persist === false) continue; // 不累積的 movement,過了本階段就消失
       const color = colors[mv.factionId] ?? "#888";
-      const dashed = mv.style === "artillery";
-      const frac =
-        span.index < currentIndex ? 1 : clamp01(localT / Math.max(0.001, mv.drawDurationSec));
+      const local = localT - (mv.startSec ?? 0); // 階段內延遲
+      const frac = past ? 1 : clamp01(local / Math.max(0.001, mv.drawDurationSec));
       if (frac <= 0 || mv.path.length < 2) continue;
 
       const line = turf.lineString(mv.path);
@@ -116,7 +130,7 @@ export function updateMovements(
         const dist = Math.max(total * frac, 1e-4);
         drawn = turf.lineSliceAlong(line, 0, dist, { units: "kilometers" });
       }
-      lineFeatures.push({ ...drawn, properties: { color, dashed } });
+      lineFeatures.push({ ...drawn, properties: { color, style: mv.style } });
 
       const coords = drawn.geometry.coordinates;
       if (coords.length >= 2) {
