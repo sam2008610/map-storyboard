@@ -49,7 +49,9 @@ npm run preview  # 預覽打包結果
 - **底圖下拉**:暗色(戰術)/ 明亮 / 簡圖(來源為 OpenFreeMap,免金鑰)。
 - **標題位置**:左上 / 中上 / 右上。
 - **資料(JSON)**:編輯下方文字框 → 按「套用並重繪」。座標 / 鏡頭 / 時長都在這裡改。
-- **匯出 WebM**:從頭播一次並錄成 `.webm`,**圖例與標題會一起進影片**。
+- **匯出影片**:跳出設定視窗,選**格式(MP4 / WebM)**、**畫質**(低/中/高)、**解析度**(1080/720/480p);匯出時有進度條與剩餘時間,可中途取消。**圖例與標題會一起進影片**。
+  - **MP4**(預設,H.264):各平台/通訊軟體/簡報都收。用瀏覽器**原生 MediaRecorder 直接錄成 MP4**(Chrome 126+),**免轉檔**。
+  - **WebM**:不支援原生 MP4 的瀏覽器可改用。
 
 ### 編輯流程建議
 
@@ -111,7 +113,7 @@ npm run preview  # 預覽打包結果
 - **座標一律 `[lng, lat]`(經度在前、緯度在後)**,符合 GeoJSON 慣例。
   ⚠️ 注意這跟 Leaflet 的 `[lat, lng]` 相反,從別處搬資料時要翻轉。
 - **時間軸是把各 `phase.durationSec` 依序串接**而成;總長 = 所有 phase 時長相加。
-- **匯出綁即時播放**(MediaRecorder),可能掉幀、格式為 WebM(非 MP4)。高品質 4K/MP4 逐幀匯出留 v2。
+- **匯出綁即時播放**(MediaRecorder),錄一支 X 秒的片就要約 X 秒,且可能掉幀。要**比即時更快**(逐幀硬體編碼)需改用 WebCodecs,留待之後。
 - **中文標籤由瀏覽器本機字型渲染**(localIdeograph):匯出端機器需安裝 Noto Serif TC / Noto Sans TC,中文地名才會顯示。
 
 ---
@@ -285,7 +287,7 @@ npm run preview  # 預覽打包結果
 - **地圖**:MapLibre GL JS(WebGL 平滑運鏡);底圖 OpenFreeMap(免金鑰)。
 - **地理運算**:Turf.js(`turf.along` / `lineSliceAlong` 讓箭頭沿路徑生長)。
 - **動畫核心**:自建 timeline clock(`requestAnimationFrame`);`Scene.render(t)` 為純函式,播放 / scrub / 匯出共用同一條路。
-- **匯出**:`canvas.captureStream()` + `MediaRecorder`。**所有要入鏡的地圖內容皆以 GL 圖層繪製**,圖例 / 標題則以 2D canvas 合成疊加(因為 captureStream 只錄 GL canvas)。
+- **匯出**:`canvas.captureStream()` + `MediaRecorder`,依瀏覽器支援直接錄成 **MP4(H.264)** 或 WebM;**所有要入鏡的地圖內容皆以 GL 圖層繪製**,圖例 / 標題則以 2D canvas 合成疊加(因為 captureStream 只錄 GL canvas)。
 
 ### 專案結構
 
@@ -298,8 +300,8 @@ src/
 ├─ engine/               clock · timeline · camera · easing（動畫核心）
 ├─ render/               scene · movements · places · annotations · overlay · colors
 ├─ map/                  basemaps · MapStage（MapLibre 容器）· stageController
-├─ export/recordWebM.ts  WebM 匯出（含合成圖例/標題）
-└─ ui/                   ProjectBar · Sidebar · TransportBar · JsonEditor · Legend
+├─ export/recordWebM.ts  錄製 + 圖例/標題合成（MP4 / WebM）
+└─ ui/                   ProjectBar · Sidebar · TransportBar · JsonEditor · Legend · EditorPanel · ExportDialog
 ```
 
 ---
@@ -308,14 +310,15 @@ src/
 
 **v1 限制**
 
-- 匯出為即時錄製,可能掉幀;格式 WebM(非 MP4)。
-- JSON 採整份貼上 / 套用;尚無拖拉式座標編輯。
+- 匯出為即時錄製,可能掉幀(錄一支 X 秒的片就要花約 X 秒)。
+- MP4 用瀏覽器原生錄製(Chrome 126+);舊瀏覽器只能匯出 WebM。
+- JSON 採整份貼上 / 套用;視覺編輯目前限地點(鏡頭擷取 + 點/拖曳),路線/分鏡尚未。
 - 中文匯出需本機字型(見上)。
 - 專案存檔在**瀏覽器 localStorage**(單機、會被清快取清掉);長期備份請用「匯出 JSON」。
 
-**v2 規劃**
+**之後規劃**
 
 - LLM 文字 → timeline JSON(帶座標校正)。
 - 前線 / 領土多邊形隨階段變形(`fronts` / `territory`)。
-- 高品質匯出:ffmpeg.wasm 逐幀 → 固定 fps 4K MP4。
-- 標題卡轉場 / 字幕 / 旁白音軌、地圖點選填座標。
+- 比即時更快 / 逐幀無損 / 4K 匯出(WebCodecs 硬體編碼)。
+- 視覺編輯擴充:路線繪製、分鏡排序、陣營編輯。

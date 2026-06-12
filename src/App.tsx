@@ -12,7 +12,7 @@ import {
 } from "./store/projects";
 import { DEFAULT_BASEMAP_ID } from "./map/basemaps";
 import MapStage, { type EditTool } from "./map/MapStage";
-import type { StageController } from "./map/stageController";
+import type { StageController, ExportOptions } from "./map/stageController";
 import Sidebar from "./ui/Sidebar";
 import ProjectBar from "./ui/ProjectBar";
 import TransportBar from "./ui/TransportBar";
@@ -138,17 +138,19 @@ export default function App() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  // 點「匯出 WebM」→ 開設定視窗(不直接匯出)
+  // 點「匯出影片」→ 開設定視窗(不直接匯出)
   const openExport = () => {
     setExportProgress(0);
     setExportOpen(true);
   };
-  const startExport = async (opts: { videoBitsPerSecond: number; resolutionScale: number }) => {
+  const startExport = async (opts: ExportOptions) => {
     if (!controllerRef.current) return;
     setExporting(true);
     setExportProgress(0);
     try {
-      await controllerRef.current.exportWebM({ ...opts, onProgress: setExportProgress });
+      await controllerRef.current.exportVideo({ ...opts, onProgress: setExportProgress });
+    } catch (e) {
+      alert("匯出失敗:" + (e as Error).message);
     } finally {
       setExporting(false);
       setExportOpen(false);

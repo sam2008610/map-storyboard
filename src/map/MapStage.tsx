@@ -5,7 +5,7 @@ import { basemapStyleUrl } from "./basemaps";
 import { MAP_IDEOGRAPH_FONT } from "./mapFonts";
 import { Scene } from "../render/scene";
 import { TimelineClock } from "../engine/clock";
-import { recordWebM, downloadBlob } from "../export/recordWebM";
+import { recordWebM, downloadBlob, pickRecordMime } from "../export/recordWebM";
 import { drawOverlay } from "../render/overlay";
 import { updatePlaces, setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
 import type { StageController } from "./stageController";
@@ -201,14 +201,19 @@ export default function MapStage({
           };
         },
         totalDuration: () => scene.totalDuration,
-        exportWebM: async (opts) => {
+        exportVideo: async (opts) => {
           clockRef.current?.pause();
-          const fname = `${docRef.current.meta.title || "warmap"}.webm`;
+          const title = docRef.current.meta.title || "warmap";
+          // MP4 用瀏覽器原生錄製(H.264);不支援時退回 WebM。即時錄製,無轉檔。
+          const mp4Mime = opts.format === "mp4" ? pickRecordMime("mp4") : null;
+          const isMp4 = !!mp4Mime;
+          const recMime = mp4Mime ?? pickRecordMime("webm") ?? undefined;
           const [ew, eh] = dimsRef.current;
           const W = Math.round(ew * opts.resolutionScale);
           const H = Math.round(eh * opts.resolutionScale);
           const ac = new AbortController();
           exportAbortRef.current = ac;
+
           const blob = await recordWebM({
             canvas: map.getCanvas(),
             durationSec: scene.totalDuration,
@@ -216,19 +221,18 @@ export default function MapStage({
             width: W,
             height: H,
             videoBitsPerSecond: opts.videoBitsPerSecond,
+            mimeType: recMime,
             render: (t) => scene.render(t),
             overlay: (ctx, ow, oh) => drawOverlay(ctx, docRef.current, ow, oh),
-            onProgress: opts.onProgress,
+            onProgress: (f) => opts.onProgress?.(f),
             signal: ac.signal,
           });
           exportAbortRef.current = null;
           scene.render(0);
           clockRef.current?.seek(0);
-          if (blob) {
-            downloadBlob(blob, fname);
-            return true;
-          }
-          return false;
+          if (!blob) return false; // 取消
+          downloadBlob(blob, `${title}.${isMp4 ? "mp4" : "webm"}`);
+          return true;
         },
         cancelExport: () => exportAbortRef.current?.abort(),
       };

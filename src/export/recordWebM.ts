@@ -2,16 +2,28 @@
 // ⚠️ 只會錄到 MapLibre WebGL canvas 上的內容；DOM 疊加層不會進影片。
 // 因此所有要入鏡的地圖內容都以 GL layer 繪製（見 render/*）。
 
-function pickMime(): string {
-  const candidates = [
-    "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8",
-    "video/webm",
-  ];
-  for (const m of candidates) {
-    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)) return m;
-  }
-  return "video/webm";
+const MP4_CANDIDATES = [
+  "video/mp4;codecs=avc1.42E01E",
+  "video/mp4;codecs=avc1",
+  "video/mp4",
+];
+const WEBM_CANDIDATES = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+
+function firstSupported(candidates: string[]): string | null {
+  if (typeof MediaRecorder === "undefined") return null;
+  for (const m of candidates) if (MediaRecorder.isTypeSupported(m)) return m;
+  return null;
+}
+
+/** 瀏覽器能否直接把 MediaRecorder 錄成 MP4(H.264)?(Chrome 126+ 支援) */
+export function canRecordMp4(): boolean {
+  return firstSupported(MP4_CANDIDATES) !== null;
+}
+
+/** 解析此次錄製要用的 mimeType。format=mp4 但不支援時回傳 null(交給呼叫端走轉檔備援)。 */
+export function pickRecordMime(format: "webm" | "mp4"): string | null {
+  if (format === "mp4") return firstSupported(MP4_CANDIDATES);
+  return firstSupported(WEBM_CANDIDATES) ?? "video/webm";
 }
 
 /**
@@ -39,12 +51,13 @@ export function recordWebM(opts: {
   width?: number;
   height?: number;
   videoBitsPerSecond?: number;
+  mimeType?: string; // 指定錄製格式(mp4/webm);省略則挑 webm
   onProgress?: (fraction: number) => void;
   signal?: AbortSignal;
 }): Promise<Blob | null> {
   const { canvas, durationSec, render, overlay, onProgress, signal } = opts;
   const fps = opts.fps ?? 30;
-  const mimeType = pickMime();
+  const mimeType = opts.mimeType ?? pickRecordMime("webm") ?? "video/webm";
 
   // 合成模式：建立目標解析度的 2D canvas，每幀 drawImage(gl) + overlay
   let composite: HTMLCanvasElement | null = null;
