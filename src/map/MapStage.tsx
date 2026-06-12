@@ -5,6 +5,7 @@ import { basemapStyleUrl } from "./basemaps";
 import { MAP_IDEOGRAPH_FONT } from "./mapFonts";
 import { Scene } from "../render/scene";
 import { TimelineClock } from "../engine/clock";
+import { buildExportFilename } from "../export/filename";
 import { recordWebM, downloadBlob, pickRecordMime } from "../export/recordWebM";
 import { drawOverlay } from "../render/overlay";
 import { updatePlaces, setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
@@ -231,7 +232,13 @@ export default function MapStage({
           scene.render(0);
           clockRef.current?.seek(0);
           if (!blob) return false; // 取消
-          downloadBlob(blob, `${title}.${isMp4 ? "mp4" : "webm"}`);
+          const filename = buildExportFilename({
+            title,
+            ext: isMp4 ? "mp4" : "webm",
+            aspectRatio: docRef.current.meta.aspectRatio,
+            resolutionScale: opts.resolutionScale,
+          });
+          downloadBlob(blob, filename);
           return true;
         },
         cancelExport: () => exportAbortRef.current?.abort(),
