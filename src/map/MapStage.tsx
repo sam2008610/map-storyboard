@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MlMap } from "maplibre-gl";
 import type { AspectRatio, TimelineDoc } from "../types/timeline";
 import { basemapStyleUrl } from "./basemaps";
+import { MAP_IDEOGRAPH_FONT } from "./mapFonts";
 import { Scene } from "../render/scene";
 import { TimelineClock } from "../engine/clock";
 import { recordWebM, downloadBlob } from "../export/recordWebM";
@@ -94,7 +95,7 @@ export default function MapStage({
       bearing: first?.bearing ?? 0,
       pitch: first?.pitch ?? 0,
       preserveDrawingBuffer: true, // captureStream / readPixels 必要
-      localIdeographFontFamily: "'Noto Serif TC','Noto Sans TC',sans-serif",
+      localIdeographFontFamily: MAP_IDEOGRAPH_FONT,
       attributionControl: { compact: true },
       interactive: true,
     });
@@ -228,14 +229,13 @@ export default function MapStage({
   }, []);
 
   // 切換底圖：初始 style 已由 map 建構帶入，只在 id 真正改變時 setStyle
-  // （以「已套用的 id」比對，避免 StrictMode 雙呼叫造成多餘的 setStyle）
   useEffect(() => {
     if (basemapId === appliedBasemap.current) return;
     const map = mapRef.current;
     const scene = sceneRef.current;
     if (!map || !scene) return;
     appliedBasemap.current = basemapId;
-    map.setStyle(basemapStyleUrl(basemapId));
+    map.setStyle(basemapStyleUrl(basemapId), { localIdeographFontFamily: MAP_IDEOGRAPH_FONT });
     const onStyle = () => {
       scene.setup(basemapId);
       setPlaceEditMode(map, editModeRef.current);

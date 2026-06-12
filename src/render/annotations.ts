@@ -17,7 +17,7 @@ export function addAnnotationLayers(map: MlMap, basemapId: string) {
     layout: {
       "text-field": ["get", "text"],
       "text-font": ["Noto Sans Regular"],
-      "text-size": ["match", ["get", "kind"], "title", 22, 15],
+      "text-size": ["match", ["get", "kind"], "title", 26, 18],
       "text-offset": [0, -1.6],
       "text-anchor": "bottom",
       "text-allow-overlap": true,

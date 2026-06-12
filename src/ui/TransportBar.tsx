@@ -1,6 +1,5 @@
 import type { AspectRatio } from "../types/timeline";
 import { BASEMAPS } from "../map/basemaps";
-
 const ASPECTS: AspectRatio[] = ["16:9", "9:16", "1:1"];
 
 interface Props {
