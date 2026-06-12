@@ -71,6 +71,7 @@ export default function MapStage({
   const onSelectRef = useRef(onSelectPlace);
   const onMoveRef = useRef(onMovePlace);
   const draggingRef = useRef<string | null>(null);
+  const exportAbortRef = useRef<AbortController | null>(null);
   const selectedPlaceIdRef = useRef(selectedPlaceId);
   editModeRef.current = editMode;
   selectedPlaceIdRef.current = selectedPlaceId;
@@ -199,23 +200,37 @@ export default function MapStage({
             pitch: map.getPitch(),
           };
         },
-        exportWebM: async () => {
+        totalDuration: () => scene.totalDuration,
+        exportWebM: async (opts) => {
           clockRef.current?.pause();
           const fname = `${docRef.current.meta.title || "warmap"}.webm`;
           const [ew, eh] = dimsRef.current;
+          const W = Math.round(ew * opts.resolutionScale);
+          const H = Math.round(eh * opts.resolutionScale);
+          const ac = new AbortController();
+          exportAbortRef.current = ac;
           const blob = await recordWebM({
             canvas: map.getCanvas(),
             durationSec: scene.totalDuration,
             fps: 30,
-            width: ew,
-            height: eh,
+            width: W,
+            height: H,
+            videoBitsPerSecond: opts.videoBitsPerSecond,
             render: (t) => scene.render(t),
             overlay: (ctx, ow, oh) => drawOverlay(ctx, docRef.current, ow, oh),
+            onProgress: opts.onProgress,
+            signal: ac.signal,
           });
-          downloadBlob(blob, fname);
+          exportAbortRef.current = null;
           scene.render(0);
           clockRef.current?.seek(0);
+          if (blob) {
+            downloadBlob(blob, fname);
+            return true;
+          }
+          return false;
         },
+        cancelExport: () => exportAbortRef.current?.abort(),
       };
       onReady(controller);
     });

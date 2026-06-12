@@ -17,6 +17,7 @@ import Sidebar from "./ui/Sidebar";
 import ProjectBar from "./ui/ProjectBar";
 import TransportBar from "./ui/TransportBar";
 import EditorPanel from "./ui/EditorPanel";
+import ExportDialog from "./ui/ExportDialog";
 
 function withDefaultBasemap(doc: TimelineDoc): TimelineDoc {
   return { ...doc, meta: { ...doc.meta, basemapStyle: DEFAULT_BASEMAP_ID } };
@@ -43,6 +44,8 @@ export default function App() {
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const controllerRef = useRef<StageController | null>(null);
 
   // ---- 編輯模式狀態 ----
@@ -135,15 +138,23 @@ export default function App() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  const handleExportVideo = async () => {
+  // 點「匯出 WebM」→ 開設定視窗(不直接匯出)
+  const openExport = () => {
+    setExportProgress(0);
+    setExportOpen(true);
+  };
+  const startExport = async (opts: { videoBitsPerSecond: number; resolutionScale: number }) => {
     if (!controllerRef.current) return;
     setExporting(true);
+    setExportProgress(0);
     try {
-      await controllerRef.current.exportWebM();
+      await controllerRef.current.exportWebM({ ...opts, onProgress: setExportProgress });
     } finally {
       setExporting(false);
+      setExportOpen(false);
     }
   };
+  const cancelExport = () => controllerRef.current?.cancelExport();
 
   // ---- 編輯操作 ----
   const toggleEditMode = () => {
@@ -259,9 +270,18 @@ export default function App() {
           onSeek={(t) => controllerRef.current?.seek(t)}
           onAspect={(a) => patchMeta({ aspectRatio: a })}
           onBasemap={(id) => patchMeta({ basemapStyle: id })}
-          onExport={handleExportVideo}
+          onExport={openExport}
         />
       </main>
+      <ExportDialog
+        open={exportOpen}
+        durationSec={duration}
+        exporting={exporting}
+        progress={exportProgress}
+        onStart={startExport}
+        onCancel={cancelExport}
+        onClose={() => setExportOpen(false)}
+      />
     </div>
   );
 }

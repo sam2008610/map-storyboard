@@ -21,6 +21,15 @@ function pickMime(): string {
  * 若提供 overlay，則改為合成模式：每幀把地圖 GL canvas 畫進一張 width×height 的
  * 2D canvas，再疊 overlay（圖例等），錄這張合成 canvas。如此圖例才會進影片。
  */
+/**
+ * 自行以 requestAnimationFrame 從 0 播到 durationSec，期間 captureStream 錄製。
+ * render(t) 為純函式（Scene.render），不依賴外部 clock。
+ *
+ * - width/height：合成 canvas 目標解析度（縮小 = 720p/480p，檔案更小）。
+ * - videoBitsPerSecond：位元率上限（畫質↔大小的主要槓桿）。
+ * - onProgress(0..1)：給進度條/ETA。
+ * - signal：AbortSignal，aborted 時停止並 resolve(null)（視為取消，不下載）。
+ */
 export function recordWebM(opts: {
   canvas: HTMLCanvasElement;
   durationSec: number;
@@ -29,8 +38,11 @@ export function recordWebM(opts: {
   overlay?: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
   width?: number;
   height?: number;
-}): Promise<Blob> {
-  const { canvas, durationSec, render, overlay } = opts;
+  videoBitsPerSecond?: number;
+  onProgress?: (fraction: number) => void;
+  signal?: AbortSignal;
+}): Promise<Blob | null> {
+  const { canvas, durationSec, render, overlay, onProgress, signal } = opts;
   const fps = opts.fps ?? 30;
   const mimeType = pickMime();
 
@@ -56,29 +68,39 @@ export function recordWebM(opts: {
 
   const captureTarget = composite ?? canvas;
   const stream = captureTarget.captureStream(fps);
-  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+  const recorder = new MediaRecorder(stream, {
+    mimeType,
+    videoBitsPerSecond: opts.videoBitsPerSecond ?? 2_500_000,
+  });
   const chunks: BlobPart[] = [];
   recorder.ondataavailable = (e) => {
     if (e.data.size > 0) chunks.push(e.data);
   };
 
-  return new Promise<Blob>((resolve, reject) => {
+  return new Promise<Blob | null>((resolve, reject) => {
+    let aborted = false;
     recorder.onerror = (e) => reject(e);
-    recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
+    recorder.onstop = () => resolve(aborted ? null : new Blob(chunks, { type: mimeType }));
 
     recorder.start();
     const start = performance.now();
     const step = (now: number) => {
+      if (signal?.aborted) {
+        aborted = true;
+        recorder.stop();
+        return;
+      }
       const t = (now - start) / 1000;
       if (t >= durationSec) {
         render(durationSec);
         drawFrame();
-        // 多等一幀讓最後畫面進入 stream，再停止
-        requestAnimationFrame(() => recorder.stop());
+        onProgress?.(1);
+        requestAnimationFrame(() => recorder.stop()); // 多等一幀讓最後畫面進入 stream
         return;
       }
       render(t);
       drawFrame();
+      onProgress?.(t / durationSec);
       requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
