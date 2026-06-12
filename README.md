@@ -1,6 +1,6 @@
 # 地圖分鏡 (map-storyboard)
 
-從一份 **timeline JSON** 在真實地理底圖上產出**分階段的戰史 / 時空地圖動畫**,並匯出成影片(WebM)。內建相機運鏡、行軍箭頭、地點標籤、圖例與標題卡,適合書籍作者 / 歷史內容創作者做 YouTube / Shorts / Reels 配圖。
+從一份 **timeline JSON** 在真實地理底圖上產出**分階段的戰史 / 時空地圖動畫**,並匯出成影片(**MP4** / WebM)。內建相機運鏡、行軍箭頭、地點標籤、圖例與標題卡,適合書籍作者 / 歷史內容創作者做 YouTube / Shorts / Reels 配圖。
 
 > v1 為純手動編輯流程:你編輯 JSON → 即時預覽 → 匯出影片。
 > 「文字 → JSON」的 LLM 自動抽取留待 v2。
@@ -39,7 +39,7 @@ npm run preview  # 預覽打包結果
 │  · 資料 JSON  │     └──────────────────────────┘    │
 │              ├────────────────────────────────────┤
 │              │ ▶  0:00/0:29 ──●───  16:9 9:16 1:1  │
-│              │                 底圖▾   [匯出 WebM]  │
+│              │                 底圖▾   [匯出影片]  │
 └──────────────┴────────────────────────────────────┘
 ```
 
@@ -52,6 +52,7 @@ npm run preview  # 預覽打包結果
 - **匯出影片**:跳出設定視窗,選**格式(MP4 / WebM)**、**畫質**(低/中/高)、**解析度**(1080/720/480p);匯出時有進度條與剩餘時間,可中途取消。**圖例與標題會一起進影片**。
   - **MP4**(預設,H.264):各平台/通訊軟體/簡報都收。用瀏覽器**原生 MediaRecorder 直接錄成 MP4**(Chrome 126+),**免轉檔**。
   - **WebM**:不支援原生 MP4 的瀏覽器可改用。
+  - **檔名**:自動加上時間與解析度,格式為 `{標題}_{YYYYMMDD-HHmmss}_{比例}-{解析度}.{副檔名}`(例:`西南戰爭_20250612-153045_16x9-720p.mp4`)。
 
 ### 編輯流程建議
 
@@ -114,7 +115,8 @@ npm run preview  # 預覽打包結果
   ⚠️ 注意這跟 Leaflet 的 `[lat, lng]` 相反,從別處搬資料時要翻轉。
 - **時間軸是把各 `phase.durationSec` 依序串接**而成;總長 = 所有 phase 時長相加。
 - **匯出綁即時播放**(MediaRecorder),錄一支 X 秒的片就要約 X 秒,且可能掉幀。要**比即時更快**(逐幀硬體編碼)需改用 WebCodecs,留待之後。
-- **中文標籤由瀏覽器本機字型渲染**(localIdeograph):匯出端機器需安裝 Noto Serif TC / Noto Sans TC,中文地名才會顯示。
+- **中文地圖標籤**由瀏覽器本機字型渲染(localIdeograph),固定使用 **Noto Sans TC 黑體**;標題卡則用 **Noto Serif TC 明體**。匯出端機器建議安裝 `fonts-noto-cjk`(Linux)或從 Google Fonts 載入,否則中文可能變方塊或退回系統預設字。
+- **標籤配色**:淺色底圖上,地點名為冷灰黑、事件註解為暖赭紅,兩者字體相同但顏色不同以便區分。
 
 ---
 
@@ -135,7 +137,7 @@ npm run preview  # 預覽打包結果
 
 | 欄位 | 型別 | 必填 | 說明 |
 |---|---|---|---|
-| `title` | string | ✓ | 主標題,顯示在標題卡、也是匯出檔名。 |
+| `title` | string | ✓ | 主標題,顯示在標題卡;也是匯出影片檔名的前綴(會再附上時間、比例、解析度)。 |
 | `subtitle` | string | | 副標題,顯示在主標題下方。 |
 | `aspectRatio` | `"16:9" \| "9:16" \| "1:1"` | ✓ | 畫面比例 / 匯出解析度(1920×1080 / 1080×1920 / 1080×1080)。 |
 | `basemapStyle` | string | ✓ | 底圖 id:`"dark"` / `"liberty"` / `"positron"`。 |
@@ -218,7 +220,7 @@ npm run preview  # 預覽打包結果
 | `text` | string | 文字內容。 |
 | `lng` / `lat` | number | 標註位置座標。 |
 | `startSec` | number | **階段內延遲幾秒才浮現,預設 0**。例如讓「某城陷落」在該段播到一半才出現。 |
-| `kind` | `"caption" \| "title"` | **預設 `caption`**。`title` = 較大字級,適合該段的結語/標題。 |
+| `kind` | `"caption" \| "title"` | **預設 `caption`**(18px)。`title` = 較大字級(26px),適合該段的結語/標題。 |
 
 ---
 
@@ -299,8 +301,8 @@ src/
 ├─ store/projects.ts     localStorage 專案存取（存檔 / 開啟 / 刪除）
 ├─ engine/               clock · timeline · camera · easing（動畫核心）
 ├─ render/               scene · movements · places · annotations · overlay · colors
-├─ map/                  basemaps · MapStage（MapLibre 容器）· stageController
-├─ export/recordWebM.ts  錄製 + 圖例/標題合成（MP4 / WebM）
+├─ map/                  basemaps · mapFonts · MapStage（MapLibre 容器）· stageController
+├─ export/               recordWebM（錄製 + 圖例/標題合成）· filename（匯出檔名）
 └─ ui/                   ProjectBar · Sidebar · TransportBar · JsonEditor · Legend · EditorPanel · ExportDialog
 ```
 

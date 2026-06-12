@@ -68,7 +68,7 @@ export default function TransportBar(p: Props) {
         ))}
       </select>
       <button className="export" onClick={p.onExport} disabled={p.exporting || p.editMode}>
-        {p.exporting ? "匯出中…" : "匯出 WebM"}
+        {p.exporting ? "匯出中…" : "匯出影片"}
       </button>
     </div>
   );
