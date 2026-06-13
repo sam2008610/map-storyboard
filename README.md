@@ -5,6 +5,12 @@
 > v1 為純手動編輯流程:你編輯 JSON → 即時預覽 → 匯出影片。
 > 「文字 → JSON」的 LLM 自動抽取留待 v2。
 
+## 範例預覽
+
+![西南戰爭分鏡示範](./docs/demo-seinan.gif)
+
+*內建範例「西南戰爭」· 16:9 · 由 timeline JSON 匯出（前 12 秒）*
+
 ---
 
 ## 快速開始
@@ -294,6 +300,7 @@ npm run preview  # 預覽打包結果
 ### 專案結構
 
 ```
+docs/                      README 示範 GIF
 examples/                  內建範例 JSON（自動載入成「範例」選單）
 src/
 ├─ types/timeline.ts     資料模型（schema 的真實來源）
