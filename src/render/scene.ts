@@ -33,12 +33,13 @@ export class Scene {
     this.keys = { places: null, movements: null, annotations: null };
   }
 
-  /** 在 map style 載入完成後呼叫一次。 */
+  /** 在 map style 載入完成後呼叫（每次換底圖後 source 都是新建的空 source）。 */
   setup(basemapId: string) {
+    this.invalidate();
+    if (this.map.getSource("wm-places")) return; // 同一份 style 已建立過圖層
     addMovementLayers(this.map);
     addPlaceLayers(this.map, basemapId);
     addAnnotationLayers(this.map, basemapId);
-    this.invalidate(); // 換底圖後 source 是新建的空 source
   }
 
   get totalDuration() {

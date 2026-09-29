@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AspectRatio, Place, TimelineDoc, TitlePosition } from "./types/timeline";
 import { DEFAULT_DOC, EXAMPLES, blankDoc } from "./data/examples";
 import {
@@ -12,6 +12,8 @@ import {
 } from "./store/projects";
 import { createPlayhead } from "./store/playhead";
 import { DEFAULT_BASEMAP_ID } from "./map/basemaps";
+import { sanitizeFilenameBase } from "./export/filename";
+import { validateDoc } from "./data/validate";
 import MapStage, { type EditTool } from "./map/MapStage";
 import type { StageController, ExportOptions } from "./map/stageController";
 import Sidebar from "./ui/Sidebar";
@@ -62,6 +64,17 @@ export default function App() {
 
   const refresh = () => setProjects(listProjects());
 
+  // 有未存變更時,關閉 / 重新整理分頁前提醒
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
   // 改動「地理內容」(places/phases/factions…)：需重建場景時間軸
   const applyDoc = (next: TimelineDoc, markDirty = true) => {
     setDocState(next);
@@ -76,8 +89,18 @@ export default function App() {
   };
 
   // ---- 專案操作 ----
+  // 存檔失敗(例如 localStorage 已滿)時提示,並維持未存狀態
+  const trySave = (opts: Parameters<typeof saveProject>[0]) => {
+    try {
+      return saveProject(opts);
+    } catch (e) {
+      alert("存檔失敗:" + (e as Error).message);
+      return null;
+    }
+  };
   const handleSave = () => {
-    const meta = saveProject({ id: currentId ?? undefined, name: projectName || "未命名", doc });
+    const meta = trySave({ id: currentId ?? undefined, name: projectName || "未命名", doc });
+    if (!meta) return;
     setCurrentId(meta.id);
     setDirty(false);
     refresh();
@@ -85,7 +108,8 @@ export default function App() {
   const handleSaveAs = () => {
     const name = window.prompt("另存新檔名稱", projectName);
     if (!name) return;
-    const meta = saveProject({ name, doc });
+    const meta = trySave({ name, doc });
+    if (!meta) return;
     setCurrentId(meta.id);
     setProjectName(name);
     setDirty(false);
@@ -106,7 +130,12 @@ export default function App() {
     applyDoc(structuredClone(p.doc), false);
   };
   const handleDelete = (id: string) => {
-    deleteProject(id);
+    try {
+      deleteProject(id);
+    } catch (e) {
+      alert("刪除失敗:" + (e as Error).message);
+      return;
+    }
     if (id === currentId) setCurrentId(null);
     refresh();
   };
@@ -119,10 +148,10 @@ export default function App() {
   };
   const handleImport = async (file: File) => {
     try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as TimelineDoc;
-      if (!parsed.phases || !Array.isArray(parsed.phases)) throw new Error("缺少 phases 陣列");
-      setProjectName(parsed.meta?.title || file.name.replace(/\.json$/i, ""));
+      const result = validateDoc(JSON.parse(await file.text()));
+      if (!result.ok) throw new Error("\n" + result.errors.join("\n"));
+      const parsed = result.doc;
+      setProjectName(parsed.meta.title || file.name.replace(/\.json$/i, ""));
       setCurrentId(null);
       applyDoc(parsed, true);
     } catch (e) {
@@ -134,7 +163,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${projectName || "warmap"}.json`;
+    a.download = `${sanitizeFilenameBase(projectName)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -151,7 +180,11 @@ export default function App() {
     setExporting(true);
     setExportProgress(0);
     try {
-      await controllerRef.current.exportVideo({ ...opts, onProgress: setExportProgress });
+      // 進度以 0.5% 為單位更新,避免每幀都觸發 App re-render
+      await controllerRef.current.exportVideo({
+        ...opts,
+        onProgress: (f) => setExportProgress(Math.floor(f * 200) / 200),
+      });
     } catch (e) {
       alert("匯出失敗:" + (e as Error).message);
     } finally {

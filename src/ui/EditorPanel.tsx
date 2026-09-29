@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Place, PlaceKind, TimelineDoc } from "../types/timeline";
 import type { EditTool } from "../map/MapStage";
 
@@ -20,6 +21,48 @@ interface Props {
   onCaptureCamera: () => void;
   onUpdatePlace: (id: string, patch: Partial<Place>) => void;
   onDeletePlace: (id: string) => void;
+}
+
+/**
+ * 數字輸入欄:輸入中保留草稿字串,只有在範圍內的有效數字才寫回 doc,
+ * 避免清空或輸入到一半(如 "-")時把 NaN 存進資料。失焦時還原成目前的有效值。
+ */
+function CoordField(props: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (v: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(props.value));
+  // 外部改值(拖曳、切換地點)才同步;若草稿數值已相等(如正在輸入 "35.0"),保留草稿不打斷輸入
+  useEffect(() => {
+    if (Number(draft) !== props.value) setDraft(String(props.value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.value]);
+  const n = Number(draft);
+  const valid = draft.trim() !== "" && Number.isFinite(n) && n >= props.min && n <= props.max;
+  return (
+    <label>
+      {props.label}
+      <input
+        type="number"
+        step="0.0001"
+        min={props.min}
+        max={props.max}
+        value={draft}
+        aria-invalid={!valid}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const v = Number(e.target.value);
+          if (e.target.value.trim() !== "" && Number.isFinite(v) && v >= props.min && v <= props.max) {
+            props.onCommit(v);
+          }
+        }}
+        onBlur={() => setDraft(String(props.value))}
+      />
+    </label>
+  );
 }
 
 export default function EditorPanel(p: Props) {
@@ -124,20 +167,20 @@ export default function EditorPanel(p: Props) {
             </select>
           </label>
           <div className="ed-coords">
-            <label>
-              經度
-              <input
-                type="number" step="0.0001" value={place.lng}
-                onChange={(e) => p.onUpdatePlace(place.id, { lng: parseFloat(e.target.value) })}
-              />
-            </label>
-            <label>
-              緯度
-              <input
-                type="number" step="0.0001" value={place.lat}
-                onChange={(e) => p.onUpdatePlace(place.id, { lat: parseFloat(e.target.value) })}
-              />
-            </label>
+            <CoordField
+              label="經度"
+              value={place.lng}
+              min={-180}
+              max={180}
+              onCommit={(v) => p.onUpdatePlace(place.id, { lng: v })}
+            />
+            <CoordField
+              label="緯度"
+              value={place.lat}
+              min={-85}
+              max={85}
+              onCommit={(v) => p.onUpdatePlace(place.id, { lat: v })}
+            />
           </div>
         </div>
       )}

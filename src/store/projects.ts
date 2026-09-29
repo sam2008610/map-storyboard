@@ -23,7 +23,17 @@ function readAll(): Record<string, StoredProject> {
   }
 }
 function writeAll(m: Record<string, StoredProject>) {
-  localStorage.setItem(KEY, JSON.stringify(m));
+  try {
+    localStorage.setItem(KEY, JSON.stringify(m));
+  } catch (e) {
+    // 常見原因:超過瀏覽器 localStorage 容量(約 5MB)
+    const quota = e instanceof DOMException && e.name === "QuotaExceededError";
+    throw new Error(
+      quota
+        ? "瀏覽器儲存空間已滿,請刪除不用的專案,或改用「匯出」存成 JSON 檔。"
+        : "寫入瀏覽器儲存空間失敗:" + (e as Error).message
+    );
+  }
 }
 
 function uid(): string {
