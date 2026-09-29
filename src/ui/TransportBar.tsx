@@ -1,10 +1,11 @@
 import type { AspectRatio } from "../types/timeline";
 import { BASEMAPS } from "../map/basemaps";
+import { usePlayheadTime, type Playhead } from "../store/playhead";
 const ASPECTS: AspectRatio[] = ["16:9", "9:16", "1:1"];
 
 interface Props {
   playing: boolean;
-  currentTime: number;
+  playhead: Playhead;
   duration: number;
   aspectRatio: AspectRatio;
   basemapId: string;
@@ -25,13 +26,14 @@ function fmt(t: number) {
 }
 
 export default function TransportBar(p: Props) {
+  const currentTime = usePlayheadTime(p.playhead);
   return (
     <div className="transport">
       <button className="play" onClick={p.onToggle} disabled={p.exporting || p.editMode}>
         {p.playing ? "❚❚" : "▶"}
       </button>
       <span className="time">
-        {p.editMode ? "編輯模式" : `${fmt(p.currentTime)} / ${fmt(p.duration)}`}
+        {p.editMode ? "編輯模式" : `${fmt(currentTime)} / ${fmt(p.duration)}`}
       </span>
       <input
         className="scrub"
@@ -39,7 +41,7 @@ export default function TransportBar(p: Props) {
         min={0}
         max={Math.max(p.duration, 0.001)}
         step={0.05}
-        value={Math.min(p.currentTime, p.duration)}
+        value={Math.min(currentTime, p.duration)}
         onChange={(e) => p.onSeek(parseFloat(e.target.value))}
         disabled={p.exporting || p.editMode}
       />

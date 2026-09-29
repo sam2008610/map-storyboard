@@ -10,6 +10,7 @@ import {
   setLastProjectId,
   type ProjectMeta,
 } from "./store/projects";
+import { createPlayhead } from "./store/playhead";
 import { DEFAULT_BASEMAP_ID } from "./map/basemaps";
 import MapStage, { type EditTool } from "./map/MapStage";
 import type { StageController, ExportOptions } from "./map/stageController";
@@ -33,14 +34,16 @@ function initialWorkspace(): { doc: TimelineDoc; name: string; id: string | null
 }
 
 export default function App() {
-  const init = initialWorkspace();
+  // 只在首次 render 讀 localStorage（放在元件本體會每次 render 都重讀、重 parse）
+  const [init] = useState(initialWorkspace);
   const [doc, setDocState] = useState<TimelineDoc>(() => structuredClone(init.doc));
   const [projectName, setProjectName] = useState(init.name);
   const [currentId, setCurrentId] = useState<string | null>(init.id);
   const [dirty, setDirty] = useState(false);
   const [projects, setProjects] = useState<ProjectMeta[]>(() => listProjects());
 
-  const [currentTime, setCurrentTime] = useState(0);
+  // 播放時間每幀變動,放在外部 store 由 TransportBar 自行訂閱,避免整個 App 每幀 re-render
+  const [playhead] = useState(createPlayhead);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -249,7 +252,7 @@ export default function App() {
           aspectRatio={aspectRatio}
           basemapId={basemapId}
           onReady={(c) => (controllerRef.current = c)}
-          onTime={setCurrentTime}
+          onTime={playhead.set}
           onDuration={setDuration}
           onPlayState={setPlaying}
           editMode={editMode}
@@ -262,7 +265,7 @@ export default function App() {
         />
         <TransportBar
           playing={playing}
-          currentTime={currentTime}
+          playhead={playhead}
           duration={duration}
           aspectRatio={aspectRatio}
           basemapId={basemapId}

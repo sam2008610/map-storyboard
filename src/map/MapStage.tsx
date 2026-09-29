@@ -8,7 +8,7 @@ import { TimelineClock } from "../engine/clock";
 import { buildExportFilename } from "../export/filename";
 import { recordWebM, downloadBlob, pickRecordMime } from "../export/recordWebM";
 import { drawOverlay } from "../render/overlay";
-import { updatePlaces, setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
+import { setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
 import type { StageController } from "./stageController";
 
 export type EditTool = "add-place" | null;
@@ -97,6 +97,7 @@ export default function MapStage({
       bearing: first?.bearing ?? 0,
       pitch: first?.pitch ?? 0,
       preserveDrawingBuffer: true, // captureStream / readPixels 必要
+      pixelRatio: 1, // 實際值由下方 scale effect 依預覽縮放決定
       localIdeographFontFamily: MAP_IDEOGRAPH_FONT,
       attributionControl: { compact: true },
       interactive: true,
@@ -156,10 +157,7 @@ export default function MapStage({
       map.on("mousemove", (e) => {
         const id = draggingRef.current;
         if (!id) return;
-        updatePlaces(map, docRef.current, scene.built, selectedPhaseRef.current, {
-          editMode: true,
-          override: { id, lng: e.lngLat.lng, lat: e.lngLat.lat },
-        });
+        scene.renderStatic(selectedPhaseRef.current, { id, lng: e.lngLat.lng, lat: e.lngLat.lat });
       });
       map.on("mouseup", (e) => {
         const id = draggingRef.current;
@@ -214,23 +212,31 @@ export default function MapStage({
           const H = Math.round(eh * opts.resolutionScale);
           const ac = new AbortController();
           exportAbortRef.current = ac;
+          // 匯出最高 1080p,GL canvas 以 1x 渲染即足夠,省下高 DPI 螢幕上的多餘像素
+          const previewPixelRatio = map.getPixelRatio();
+          map.setPixelRatio(1);
 
-          const blob = await recordWebM({
-            canvas: map.getCanvas(),
-            durationSec: scene.totalDuration,
-            fps: 30,
-            width: W,
-            height: H,
-            videoBitsPerSecond: opts.videoBitsPerSecond,
-            mimeType: recMime,
-            render: (t) => scene.render(t),
-            overlay: (ctx, ow, oh) => drawOverlay(ctx, docRef.current, ow, oh),
-            onProgress: (f) => opts.onProgress?.(f),
-            signal: ac.signal,
-          });
-          exportAbortRef.current = null;
-          scene.render(0);
-          clockRef.current?.seek(0);
+          let blob: Blob | null;
+          try {
+            blob = await recordWebM({
+              canvas: map.getCanvas(),
+              durationSec: scene.totalDuration,
+              fps: 30,
+              width: W,
+              height: H,
+              videoBitsPerSecond: opts.videoBitsPerSecond,
+              mimeType: recMime,
+              render: (t) => scene.render(t),
+              overlay: (ctx, ow, oh) => drawOverlay(ctx, docRef.current, ow, oh),
+              onProgress: (f) => opts.onProgress?.(f),
+              signal: ac.signal,
+            });
+          } finally {
+            exportAbortRef.current = null;
+            map.setPixelRatio(previewPixelRatio);
+            scene.render(0);
+            clockRef.current?.seek(0);
+          }
           if (!blob) return false; // 取消
           const filename = buildExportFilename({
             title,
@@ -329,6 +335,15 @@ export default function MapStage({
     ctx.clearRect(0, 0, w, h);
     drawOverlay(ctx, doc, w, h);
   }, [w, h, doc]);
+
+  // 舞台以固定解析度渲染再 CSS 縮小,GL canvas 只需「縮放後的實際裝置像素」即可清晰。
+  // 不低於 1,確保匯出 1080p 時來源解析度足夠。
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const ratio = Math.max(1, scale * window.devicePixelRatio);
+    if (Math.abs(map.getPixelRatio() - ratio) > 0.01) map.setPixelRatio(ratio);
+  }, [scale]);
 
   // 量外層空間算縮放比，讓固定解析度舞台 fit 進預覽區
   useEffect(() => {

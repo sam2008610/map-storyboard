@@ -293,7 +293,7 @@ npm run preview  # 預覽打包結果
 
 - **框架**:React + TypeScript + Vite。
 - **地圖**:MapLibre GL JS(WebGL 平滑運鏡);底圖 OpenFreeMap(免金鑰)。
-- **地理運算**:Turf.js(`turf.along` / `lineSliceAlong` 讓箭頭沿路徑生長)。
+- **地理運算**:自寫的輕量路徑切片(`render/movements.ts`:haversine 累積距離 + Web Mercator 內插),換 doc 時預先計算,讓箭頭沿路徑生長。
 - **動畫核心**:自建 timeline clock(`requestAnimationFrame`);`Scene.render(t)` 為純函式,播放 / scrub / 匯出共用同一條路。
 - **匯出**:`canvas.captureStream()` + `MediaRecorder`,依瀏覽器支援直接錄成 **MP4(H.264)** 或 WebM;**所有要入鏡的地圖內容皆以 GL 圖層繪製**,圖例 / 標題則以 2D canvas 合成疊加(因為 captureStream 只錄 GL canvas)。
 

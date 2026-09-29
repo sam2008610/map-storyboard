@@ -1,7 +1,5 @@
-import * as turf from "@turf/turf";
 import type { Map as MlMap } from "maplibre-gl";
-import type { TimelineDoc } from "../types/timeline";
-import type { BuiltTimeline } from "../engine/timeline";
+import type { LngLat, Movement, TimelineDoc } from "../types/timeline";
 import { clamp01 } from "../engine/easing";
 import { factionColorMap } from "./colors";
 
@@ -15,6 +13,51 @@ function bearing(a: [number, number], b: [number, number]): number {
   const dy = b[1] - a[1];
   const dx = (b[0] - a[0]) * Math.cos(lat1);
   return (Math.atan2(dx, dy) * 180) / Math.PI;
+}
+
+const DEG = Math.PI / 180;
+const EARTH_RADIUS_KM = 6371.0088;
+const MAX_MERC_LAT = 85.0511;
+
+function haversineKm(a: LngLat, b: LngLat): number {
+  const dLat = (b[1] - a[1]) * DEG;
+  const dLng = (b[0] - a[0]) * DEG;
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * DEG) * Math.cos(b[1] * DEG) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+const mercY = (lat: number) =>
+  Math.log(Math.tan(Math.PI / 4 + (Math.max(-MAX_MERC_LAT, Math.min(MAX_MERC_LAT, lat)) * DEG) / 2));
+const latFromMercY = (y: number) => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) / DEG;
+
+// 在 a→b 取比例 t 的點。於 Web Mercator 空間內插，讓生長端點剛好落在地圖畫出的直線段上。
+function interpolate(a: LngLat, b: LngLat, t: number): LngLat {
+  const ya = mercY(a[1]);
+  return [a[0] + (b[0] - a[0]) * t, latFromMercY(ya + (mercY(b[1]) - ya) * t)];
+}
+
+/** 取路徑從起點到 distKm 的部分（cumKm 為各頂點累積距離）。 */
+function sliceAlong(path: LngLat[], cumKm: number[], distKm: number): LngLat[] {
+  const out: LngLat[] = [path[0]];
+  for (let i = 1; i < path.length; i++) {
+    if (cumKm[i] >= distKm) {
+      const seg = cumKm[i] - cumKm[i - 1];
+      out.push(interpolate(path[i - 1], path[i], seg > 0 ? (distKm - cumKm[i - 1]) / seg : 1));
+      return out;
+    }
+    out.push(path[i]);
+  }
+  return out;
+}
+
+// 箭頭方向取「與端點不同」的前一個頂點，避免路徑有重複點時 bearing 變 0
+function lastDistinctBefore(coords: LngLat[]): LngLat | null {
+  const tip = coords[coords.length - 1];
+  for (let i = coords.length - 2; i >= 0; i--) {
+    if (coords[i][0] !== tip[0] || coords[i][1] !== tip[1]) return coords[i];
+  }
+  return null;
 }
 
 function makeArrowImage(): { width: number; height: number; data: Uint8ClampedArray } {
@@ -99,43 +142,69 @@ export function addMovementLayers(map: MlMap) {
   });
 }
 
-/** 依時間計算每條 movement 的生長進度，產出 line + arrow 的 GeoJSON 並更新 source。 */
+export interface PreparedMovement {
+  mv: Movement;
+  color: string;
+  cumKm: number[]; // 各頂點的累積距離（公里），cumKm[0]=0
+  totalKm: number;
+}
+
+/**
+ * 換 doc 時預先算好每條 movement 的顏色與累積距離，render 時只剩切片與內插，
+ * 不必每幀重建幾何、重算長度。回傳值依 phase index 排列。
+ */
+export function prepareMovements(doc: TimelineDoc): PreparedMovement[][] {
+  const colors = factionColorMap(doc);
+  return doc.phases.map((phase) =>
+    phase.movements.map((mv) => {
+      const cumKm = [0];
+      for (let i = 1; i < mv.path.length; i++) {
+        cumKm.push(cumKm[i - 1] + haversineKm(mv.path[i - 1], mv.path[i]));
+      }
+      return { mv, color: colors[mv.factionId] ?? "#888", cumKm, totalKm: cumKm[cumKm.length - 1] };
+    })
+  );
+}
+
+/**
+ * 依時間計算每條 movement 的生長進度，產出 line + arrow 的 GeoJSON 並更新 source。
+ * 回傳本幀的內容 key；與 prevKey 相同代表畫面內容沒變，直接略過 setData（免觸發 worker 重新切 tile）。
+ */
 export function updateMovements(
   map: MlMap,
-  doc: TimelineDoc,
-  built: BuiltTimeline,
+  prepared: PreparedMovement[][],
   currentIndex: number,
-  localT: number
-) {
-  const colors = factionColorMap(doc);
+  localT: number,
+  prevKey: string | null
+): string {
+  // 過去 phase 的內容只取決於 currentIndex；當前 phase 取決於每條的進度
+  const fracOf = (pm: PreparedMovement) =>
+    clamp01((localT - (pm.mv.startSec ?? 0)) / Math.max(0.001, pm.mv.drawDurationSec));
+  const current = prepared[currentIndex] ?? [];
+  const key = currentIndex + "|" + current.map(fracOf).join(",");
+  if (key === prevKey) return key;
+
   const lineFeatures: any[] = [];
   const arrowFeatures: any[] = [];
 
-  for (const span of built.spans) {
-    if (span.index > currentIndex) break;
-    const past = span.index < currentIndex;
-    for (const mv of span.phase.movements) {
+  for (let i = 0; i <= currentIndex && i < prepared.length; i++) {
+    const past = i < currentIndex;
+    for (const pm of prepared[i]) {
+      const { mv, color } = pm;
       if (past && mv.persist === false) continue; // 不累積的 movement,過了本階段就消失
-      const color = colors[mv.factionId] ?? "#888";
-      const local = localT - (mv.startSec ?? 0); // 階段內延遲
-      const frac = past ? 1 : clamp01(local / Math.max(0.001, mv.drawDurationSec));
+      const frac = past ? 1 : fracOf(pm);
       if (frac <= 0 || mv.path.length < 2) continue;
 
-      const line = turf.lineString(mv.path);
-      const total = turf.length(line, { units: "kilometers" });
-      let drawn: GeoJSON.Feature<GeoJSON.LineString>;
-      if (frac >= 1) {
-        drawn = line;
-      } else {
-        const dist = Math.max(total * frac, 1e-4);
-        drawn = turf.lineSliceAlong(line, 0, dist, { units: "kilometers" });
-      }
-      lineFeatures.push({ ...drawn, properties: { color, style: mv.style } });
+      const coords = frac >= 1 ? mv.path : sliceAlong(mv.path, pm.cumKm, pm.totalKm * frac);
+      lineFeatures.push({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: coords },
+        properties: { color, style: mv.style },
+      });
 
-      const coords = drawn.geometry.coordinates;
-      if (coords.length >= 2) {
-        const tip = coords[coords.length - 1] as [number, number];
-        const prev = coords[coords.length - 2] as [number, number];
+      const tip = coords[coords.length - 1];
+      const prev = lastDistinctBefore(coords);
+      if (prev) {
         arrowFeatures.push({
           type: "Feature",
           geometry: { type: "Point", coordinates: tip },
@@ -153,4 +222,5 @@ export function updateMovements(
     type: "FeatureCollection",
     features: arrowFeatures,
   });
+  return key;
 }
