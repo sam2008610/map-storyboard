@@ -7,8 +7,10 @@ import { Scene } from "../render/scene";
 import { TimelineClock } from "../engine/clock";
 import { buildExportFilename } from "../export/filename";
 import { recordWebM, downloadBlob, pickRecordMime } from "../export/recordWebM";
+import { encodeFrames, evenDimension, pickFrameCodec } from "../export/encodeVideo";
+import { disableLabelFade, renderSettled } from "./settle";
 import { drawOverlay } from "../render/overlay";
-import { updatePlaces, setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
+import { setSelectedPlace, setPlaceEditMode, placeInteractionLayers } from "../render/places";
 import type { StageController } from "./stageController";
 
 export type EditTool = "add-place" | null;
@@ -97,6 +99,7 @@ export default function MapStage({
       bearing: first?.bearing ?? 0,
       pitch: first?.pitch ?? 0,
       preserveDrawingBuffer: true, // captureStream / readPixels 必要
+      pixelRatio: 1, // 實際值由下方 scale effect 依預覽縮放決定
       localIdeographFontFamily: MAP_IDEOGRAPH_FONT,
       attributionControl: { compact: true },
       interactive: true,
@@ -156,10 +159,7 @@ export default function MapStage({
       map.on("mousemove", (e) => {
         const id = draggingRef.current;
         if (!id) return;
-        updatePlaces(map, docRef.current, scene.built, selectedPhaseRef.current, {
-          editMode: true,
-          override: { id, lng: e.lngLat.lng, lat: e.lngLat.lat },
-        });
+        scene.renderStatic(selectedPhaseRef.current, { id, lng: e.lngLat.lng, lat: e.lngLat.lat });
       });
       map.on("mouseup", (e) => {
         const id = draggingRef.current;
@@ -205,36 +205,75 @@ export default function MapStage({
         exportVideo: async (opts) => {
           clockRef.current?.pause();
           const title = docRef.current.meta.title || "warmap";
-          // MP4 用瀏覽器原生錄製(H.264);不支援時退回 WebM。即時錄製,無轉檔。
-          const mp4Mime = opts.format === "mp4" ? pickRecordMime("mp4") : null;
-          const isMp4 = !!mp4Mime;
-          const recMime = mp4Mime ?? pickRecordMime("webm") ?? undefined;
           const [ew, eh] = dimsRef.current;
-          const W = Math.round(ew * opts.resolutionScale);
-          const H = Math.round(eh * opts.resolutionScale);
+          const W = evenDimension(ew * opts.resolutionScale);
+          const H = evenDimension(eh * opts.resolutionScale);
+          const fps = 30;
+          const compose = (ctx: CanvasRenderingContext2D, ow: number, oh: number) => {
+            ctx.drawImage(map.getCanvas(), 0, 0, ow, oh);
+            drawOverlay(ctx, docRef.current, ow, oh);
+          };
+
+          // 優先逐幀編碼(WebCodecs,不掉幀);不支援時退回 MediaRecorder 即時錄製
+          const frameCodec = await pickFrameCodec(opts.format, W, H);
+          let ext: "mp4" | "webm" = opts.format;
+          if (!frameCodec) {
+            // 即時錄製:MP4 需瀏覽器原生支援(H.264),否則退回 WebM
+            const mp4Mime = opts.format === "mp4" ? pickRecordMime("mp4") : null;
+            ext = mp4Mime ? "mp4" : "webm";
+          }
           const ac = new AbortController();
           exportAbortRef.current = ac;
 
-          const blob = await recordWebM({
-            canvas: map.getCanvas(),
-            durationSec: scene.totalDuration,
-            fps: 30,
-            width: W,
-            height: H,
-            videoBitsPerSecond: opts.videoBitsPerSecond,
-            mimeType: recMime,
-            render: (t) => scene.render(t),
-            overlay: (ctx, ow, oh) => drawOverlay(ctx, docRef.current, ow, oh),
-            onProgress: (f) => opts.onProgress?.(f),
-            signal: ac.signal,
-          });
-          exportAbortRef.current = null;
-          scene.render(0);
-          clockRef.current?.seek(0);
+          // 匯出最高 1080p,GL canvas 以 1x 渲染即足夠,省下高 DPI 螢幕上的多餘像素
+          const previewPixelRatio = map.getPixelRatio();
+          map.setPixelRatio(1);
+          const restoreFade = frameCodec ? disableLabelFade(map) : () => {};
+
+          let blob: Blob | null;
+          try {
+            if (frameCodec) {
+              blob = await encodeFrames({
+                format: opts.format,
+                codec: frameCodec,
+                width: W,
+                height: H,
+                fps,
+                durationSec: scene.totalDuration,
+                bitrate: opts.videoBitsPerSecond,
+                renderFrame: async (t) => {
+                  scene.render(t);
+                  await renderSettled(map);
+                },
+                compose,
+                onProgress: opts.onProgress,
+                signal: ac.signal,
+              });
+            } else {
+              blob = await recordWebM({
+                canvas: map.getCanvas(),
+                durationSec: scene.totalDuration,
+                fps,
+                width: W,
+                height: H,
+                videoBitsPerSecond: opts.videoBitsPerSecond,
+                mimeType: pickRecordMime(ext) ?? undefined,
+                render: (t) => scene.render(t),
+                overlay: (ctx, ow, oh) => drawOverlay(ctx, docRef.current, ow, oh),
+                onProgress: (f) => opts.onProgress?.(f),
+                signal: ac.signal,
+              });
+            }
+          } finally {
+            exportAbortRef.current = null;
+            restoreFade();
+            map.setPixelRatio(previewPixelRatio);
+            clockRef.current?.seek(0);
+          }
           if (!blob) return false; // 取消
           const filename = buildExportFilename({
             title,
-            ext: isMp4 ? "mp4" : "webm",
+            ext,
             aspectRatio: docRef.current.meta.aspectRatio,
             resolutionScale: opts.resolutionScale,
           });
@@ -254,15 +293,19 @@ export default function MapStage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 切換底圖：初始 style 已由 map 建構帶入，只在 id 真正改變時 setStyle
+  // 切換底圖：初始 style 已由 map 建構帶入，只在 id 真正改變時 setStyle。
+  // diff:false 強制整份重載，保證 style.load 一定觸發（diff 模式成功時不會觸發，且會移除自訂圖層）。
+  // 快速連續切換時，先移除上一次尚未觸發的監聽，避免圖層被重複建立。
+  const pendingStyleLoad = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (basemapId === appliedBasemap.current) return;
     const map = mapRef.current;
     const scene = sceneRef.current;
     if (!map || !scene) return;
     appliedBasemap.current = basemapId;
-    map.setStyle(basemapStyleUrl(basemapId), { localIdeographFontFamily: MAP_IDEOGRAPH_FONT });
-    const onStyle = () => {
+    if (pendingStyleLoad.current) map.off("style.load", pendingStyleLoad.current);
+    const onStyleLoad = () => {
+      pendingStyleLoad.current = null;
       scene.setup(basemapId);
       setPlaceEditMode(map, editModeRef.current);
       if (editModeRef.current) {
@@ -272,7 +315,12 @@ export default function MapStage({
         scene.render(clockRef.current?.time ?? 0);
       }
     };
-    map.once("styledata", onStyle);
+    pendingStyleLoad.current = onStyleLoad;
+    map.once("style.load", onStyleLoad);
+    map.setStyle(basemapStyleUrl(basemapId), {
+      diff: false,
+      localIdeographFontFamily: MAP_IDEOGRAPH_FONT,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [basemapId]);
 
@@ -329,6 +377,15 @@ export default function MapStage({
     ctx.clearRect(0, 0, w, h);
     drawOverlay(ctx, doc, w, h);
   }, [w, h, doc]);
+
+  // 舞台以固定解析度渲染再 CSS 縮小,GL canvas 只需「縮放後的實際裝置像素」即可清晰。
+  // 不低於 1,確保匯出 1080p 時來源解析度足夠。
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const ratio = Math.max(1, scale * window.devicePixelRatio);
+    if (Math.abs(map.getPixelRatio() - ratio) > 0.01) map.setPixelRatio(ratio);
+  }, [scale]);
 
   // 量外層空間算縮放比，讓固定解析度舞台 fit 進預覽區
   useEffect(() => {

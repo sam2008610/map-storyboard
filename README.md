@@ -54,10 +54,11 @@ npm run preview  # 預覽打包結果
 - **16:9 / 9:16 / 1:1**:切換畫面比例(舞台與匯出解析度同步改變)。
 - **底圖下拉**:暗色(戰術)/ 明亮 / 簡圖(來源為 OpenFreeMap,免金鑰)。
 - **標題位置**:左上 / 中上 / 右上。
-- **資料(JSON)**:編輯下方文字框 → 按「套用並重繪」。座標 / 鏡頭 / 時長都在這裡改。
+- **資料(JSON)**:編輯下方文字框 → 按「套用並重繪」。座標 / 鏡頭 / 時長都在這裡改。套用前會檢查結構,有問題會列出欄位路徑(如 `phases[2].camera.center`);若資料在別處被改動(例如編輯模式),尚未套用的草稿會保留並提示。
 - **匯出影片**:跳出設定視窗,選**格式(MP4 / WebM)**、**畫質**(低/中/高)、**解析度**(1080/720/480p);匯出時有進度條與剩餘時間,可中途取消。**圖例與標題會一起進影片**。
-  - **MP4**(預設,H.264):各平台/通訊軟體/簡報都收。用瀏覽器**原生 MediaRecorder 直接錄成 MP4**(Chrome 126+),**免轉檔**。
-  - **WebM**:不支援原生 MP4 的瀏覽器可改用。
+  - **逐幀渲染**(支援 WebCodecs 的瀏覽器):每幀等地圖與圖磚載入完成才編碼,**不掉幀、不受分頁切換影響**;耗時視機器與圖磚載入速度而定。
+  - **MP4**(預設,H.264):各平台/通訊軟體/簡報都收,**免轉檔**。瀏覽器無法逐幀編碼 H.264 時,退回原生 MediaRecorder 即時錄製(Chrome 126+)。
+  - **WebM**(VP9 / VP8):不支援 MP4 的瀏覽器可改用。
   - **檔名**:自動加上時間與解析度,格式為 `{標題}_{YYYYMMDD-HHmmss}_{比例}-{解析度}.{副檔名}`(例:`西南戰爭_20250612-153045_16x9-720p.mp4`)。
 
 ### 編輯流程建議
@@ -120,7 +121,7 @@ npm run preview  # 預覽打包結果
 - **座標一律 `[lng, lat]`(經度在前、緯度在後)**,符合 GeoJSON 慣例。
   ⚠️ 注意這跟 Leaflet 的 `[lat, lng]` 相反,從別處搬資料時要翻轉。
 - **時間軸是把各 `phase.durationSec` 依序串接**而成;總長 = 所有 phase 時長相加。
-- **匯出綁即時播放**(MediaRecorder),錄一支 X 秒的片就要約 X 秒,且可能掉幀。要**比即時更快**(逐幀硬體編碼)需改用 WebCodecs,留待之後。
+- **匯出優先逐幀渲染**(WebCodecs + mediabunny 封裝),每幀以時間 `t = i / 30` 渲染,等地圖完全載入才編碼,輸出與機器快慢無關;不支援 WebCodecs 時才退回 MediaRecorder 即時錄製(錄一支 X 秒的片約需 X 秒,可能掉幀)。
 - **中文地圖標籤**由瀏覽器本機字型渲染(localIdeograph),固定使用 **Noto Sans TC 黑體**;標題卡則用 **Noto Serif TC 明體**。匯出端機器建議安裝 `fonts-noto-cjk`(Linux)或從 Google Fonts 載入,否則中文可能變方塊或退回系統預設字。
 - **標籤配色**:淺色底圖上,地點名為冷灰黑、事件註解為暖赭紅,兩者字體相同但顏色不同以便區分。
 
@@ -293,9 +294,9 @@ npm run preview  # 預覽打包結果
 
 - **框架**:React + TypeScript + Vite。
 - **地圖**:MapLibre GL JS(WebGL 平滑運鏡);底圖 OpenFreeMap(免金鑰)。
-- **地理運算**:Turf.js(`turf.along` / `lineSliceAlong` 讓箭頭沿路徑生長)。
+- **地理運算**:自寫的輕量路徑切片(`render/movements.ts`:haversine 累積距離 + Web Mercator 內插),換 doc 時預先計算,讓箭頭沿路徑生長。
 - **動畫核心**:自建 timeline clock(`requestAnimationFrame`);`Scene.render(t)` 為純函式,播放 / scrub / 匯出共用同一條路。
-- **匯出**:`canvas.captureStream()` + `MediaRecorder`,依瀏覽器支援直接錄成 **MP4(H.264)** 或 WebM;**所有要入鏡的地圖內容皆以 GL 圖層繪製**,圖例 / 標題則以 2D canvas 合成疊加(因為 captureStream 只錄 GL canvas)。
+- **匯出**:主要路徑為 WebCodecs `VideoEncoder` + [mediabunny](https://github.com/Vanilagy/mediabunny) 封裝成 **MP4(H.264)** 或 WebM(VP9/VP8),逐幀渲染(按需載入,不影響首頁體積);備援為 `canvas.captureStream()` + `MediaRecorder` 即時錄製。**所有要入鏡的地圖內容皆以 GL 圖層繪製**,圖例 / 標題則以 2D canvas 合成疊加。
 
 ### 專案結構
 
@@ -304,12 +305,12 @@ docs/                      README 示範 GIF
 examples/                  內建範例 JSON（自動載入成「範例」選單）
 src/
 ├─ types/timeline.ts     資料模型（schema 的真實來源）
-├─ data/examples.ts      載入 examples/*.json + 預設 / 空白 doc
-├─ store/projects.ts     localStorage 專案存取（存檔 / 開啟 / 刪除）
+├─ data/                 examples（載入 examples/*.json + 預設 / 空白 doc）· validate（匯入 / 套用前的結構驗證）
+├─ store/                projects（localStorage 專案存取）· playhead（播放時間 store）
 ├─ engine/               clock · timeline · camera · easing（動畫核心）
 ├─ render/               scene · movements · places · annotations · overlay · colors
-├─ map/                  basemaps · mapFonts · MapStage（MapLibre 容器）· stageController
-├─ export/               recordWebM（錄製 + 圖例/標題合成）· filename（匯出檔名）
+├─ map/                  basemaps · mapFonts · MapStage（MapLibre 容器）· stageController · settle（逐幀等待地圖就緒）
+├─ export/               encodeVideo（逐幀編碼）· recordWebM（即時錄製備援）· filename（匯出檔名）
 └─ ui/                   ProjectBar · Sidebar · TransportBar · JsonEditor · Legend · EditorPanel · ExportDialog
 ```
 
@@ -319,8 +320,8 @@ src/
 
 **v1 限制**
 
-- 匯出為即時錄製,可能掉幀(錄一支 X 秒的片就要花約 X 秒)。
-- MP4 用瀏覽器原生錄製(Chrome 126+);舊瀏覽器只能匯出 WebM。
+- 逐幀匯出需瀏覽器支援 WebCodecs;不支援時退回即時錄製,可能掉幀(錄一支 X 秒的片就要花約 X 秒)。
+- 部分瀏覽器(如未內建 H.264 編碼器的 Chromium)無法逐幀輸出 MP4,可改選 WebM。
 - JSON 採整份貼上 / 套用;視覺編輯目前限地點(鏡頭擷取 + 點/拖曳),路線/分鏡尚未。
 - 中文匯出需本機字型(見上)。
 - 專案存檔在**瀏覽器 localStorage**(單機、會被清快取清掉);長期備份請用「匯出 JSON」。
@@ -329,5 +330,5 @@ src/
 
 - LLM 文字 → timeline JSON(帶座標校正)。
 - 前線 / 領土多邊形隨階段變形(`fronts` / `territory`)。
-- 比即時更快 / 逐幀無損 / 4K 匯出(WebCodecs 硬體編碼)。
+- 4K 匯出。
 - 視覺編輯擴充:路線繪製、分鏡排序、陣營編輯。

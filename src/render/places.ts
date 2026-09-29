@@ -84,22 +84,35 @@ export function addPlaceLayers(map: MlMap, basemapId: string) {
   });
 }
 
+export interface PlaceOverride {
+  id: string;
+  lng: number;
+  lat: number;
+}
+
 /**
  * Show places whose appearAtPhase index is <= currentIndex.
  * editMode=true shows all places for editing.
  * override updates one place position live while dragging without mutating doc.
+ * Returns a content key; when it equals prevKey the source already holds this data and setData is skipped.
  */
 export function updatePlaces(
   map: MlMap,
   doc: TimelineDoc,
   built: BuiltTimeline,
   currentIndex: number,
-  opts?: { editMode?: boolean; override?: { id: string; lng: number; lat: number } }
-) {
+  prevKey: string | null,
+  opts?: { editMode?: boolean; override?: PlaceOverride }
+): string {
+  const ov = opts?.override;
+  const key = opts?.editMode
+    ? `edit|${ov ? `${ov.id},${ov.lng},${ov.lat}` : ""}`
+    : `play|${currentIndex}`;
+  if (key === prevKey) return key;
+
   const colors = factionColorMap(doc);
   const phaseIndex: Record<string, number> = {};
   built.spans.forEach((s) => (phaseIndex[s.phase.id] = s.index));
-  const ov = opts?.override;
 
   const features = doc.places
     .filter((p) => {
@@ -125,6 +138,7 @@ export function updatePlaces(
     });
 
   (map.getSource(SRC) as any)?.setData({ type: "FeatureCollection", features });
+  return key;
 }
 
 /** Highlight the selected place in edit mode; pass null to clear. */

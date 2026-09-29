@@ -1,4 +1,6 @@
-// WebM 匯出：MediaRecorder + canvas.captureStream。
+// 即時錄製備援：MediaRecorder + canvas.captureStream。
+// 僅在瀏覽器不支援 WebCodecs 時使用（主要路徑見 encodeVideo.ts 的逐幀編碼）。
+// 依真實時間推進，機器太慢或分頁在背景時可能掉幀。
 // ⚠️ 只會錄到 MapLibre WebGL canvas 上的內容；DOM 疊加層不會進影片。
 // 因此所有要入鏡的地圖內容都以 GL layer 繪製（見 render/*）。
 
@@ -26,13 +28,6 @@ export function pickRecordMime(format: "webm" | "mp4"): string | null {
   return firstSupported(WEBM_CANDIDATES) ?? "video/webm";
 }
 
-/**
- * 自行以 requestAnimationFrame 從 0 播到 durationSec，期間 captureStream 錄製。
- * render(t) 為純函式（Scene.render），不依賴外部 clock，確保錄製時每幀都有畫面。
- *
- * 若提供 overlay，則改為合成模式：每幀把地圖 GL canvas 畫進一張 width×height 的
- * 2D canvas，再疊 overlay（圖例等），錄這張合成 canvas。如此圖例才會進影片。
- */
 /**
  * 自行以 requestAnimationFrame 從 0 播到 durationSec，期間 captureStream 錄製。
  * render(t) 為純函式（Scene.render），不依賴外部 clock。

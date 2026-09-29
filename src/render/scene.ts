@@ -2,8 +2,8 @@ import type { Map as MlMap } from "maplibre-gl";
 import type { TimelineDoc } from "../types/timeline";
 import { buildTimeline, phaseAt, type BuiltTimeline } from "../engine/timeline";
 import { cameraAt } from "../engine/camera";
-import { addMovementLayers, updateMovements } from "./movements";
-import { addPlaceLayers, updatePlaces } from "./places";
+import { addMovementLayers, prepareMovements, updateMovements, type PreparedMovement } from "./movements";
+import { addPlaceLayers, updatePlaces, type PlaceOverride } from "./places";
 import { addAnnotationLayers, updateAnnotations } from "./annotations";
 
 /**
@@ -14,15 +14,29 @@ export class Scene {
   map: MlMap;
   doc: TimelineDoc;
   built: BuiltTimeline;
+  private movements: PreparedMovement[][];
+  // 各 source 上次寫入內容的 key；相同就略過 setData。source 重建或 doc 變動時清空。
+  private keys: { places: string | null; movements: string | null; annotations: string | null } = {
+    places: null,
+    movements: null,
+    annotations: null,
+  };
 
   constructor(map: MlMap, doc: TimelineDoc) {
     this.map = map;
     this.doc = doc;
     this.built = buildTimeline(doc);
+    this.movements = prepareMovements(doc);
   }
 
-  /** 在 map style 載入完成後呼叫一次。 */
+  private invalidate() {
+    this.keys = { places: null, movements: null, annotations: null };
+  }
+
+  /** 在 map style 載入完成後呼叫（每次換底圖後 source 都是新建的空 source）。 */
   setup(basemapId: string) {
+    this.invalidate();
+    if (this.map.getSource("wm-places")) return; // 同一份 style 已建立過圖層
     addMovementLayers(this.map);
     addPlaceLayers(this.map, basemapId);
     addAnnotationLayers(this.map, basemapId);
@@ -36,29 +50,30 @@ export class Scene {
   setDoc(doc: TimelineDoc) {
     this.doc = doc;
     this.built = buildTimeline(doc);
+    this.movements = prepareMovements(doc);
+    this.invalidate();
   }
 
   render(time: number) {
     const at = phaseAt(this.built, time);
     const idx = at.span.index;
     this.map.jumpTo(cameraAt(this.built, at));
-    updatePlaces(this.map, this.doc, this.built, idx);
-    updateMovements(this.map, this.doc, this.built, idx, at.localT);
-    updateAnnotations(this.map, this.built, idx, at.localT);
+    const k = this.keys;
+    k.places = updatePlaces(this.map, this.doc, this.built, idx, k.places);
+    k.movements = updateMovements(this.map, this.movements, idx, at.localT, k.movements);
+    k.annotations = updateAnnotations(this.map, this.built, idx, at.localT, k.annotations);
   }
 
   /**
    * 編輯模式靜態渲染:顯示「到選定分鏡為止」的內容(行軍全部畫完、地點全顯示),
    * 但**不動鏡頭**,讓使用者自由操作地圖。override 供拖曳即時預覽。
    */
-  renderStatic(
-    phaseIndex: number,
-    override?: { id: string; lng: number; lat: number }
-  ) {
+  renderStatic(phaseIndex: number, override?: PlaceOverride) {
     const n = this.built.spans.length;
     const idx = Math.max(0, Math.min(phaseIndex, n - 1));
-    updatePlaces(this.map, this.doc, this.built, idx, { editMode: true, override });
-    updateMovements(this.map, this.doc, this.built, idx, 1e9); // localT 極大 → frac=1
-    updateAnnotations(this.map, this.built, idx, 1e9);
+    const k = this.keys;
+    k.places = updatePlaces(this.map, this.doc, this.built, idx, k.places, { editMode: true, override });
+    k.movements = updateMovements(this.map, this.movements, idx, 1e9, k.movements); // localT 極大 → frac=1
+    k.annotations = updateAnnotations(this.map, this.built, idx, 1e9, k.annotations);
   }
 }

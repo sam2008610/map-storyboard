@@ -223,6 +223,9 @@ body {
   outline: none;
   border-color: var(--accent);
 }
+.ed-form input[aria-invalid="true"] {
+  border-color: #ff8a80;
+}
 .ed-coords {
   display: flex;
   gap: 8px;
@@ -335,6 +338,19 @@ body {
   font-size: 12px;
   color: #ff8a80;
   margin-top: 7px;
+}
+ul.err {
+  margin: 7px 0 0;
+  padding-left: 16px;
+}
+.warn {
+  font-size: 12px;
+  color: #ffd27f;
+  margin-top: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 button {
